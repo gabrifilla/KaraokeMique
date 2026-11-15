@@ -97,9 +97,9 @@ Os testes de banco criam uma base `karaoke_test_<uuid>` e apagam no final, entã
 
 `pnpm exec tsx scripts/load.ts` cria e apaga salas de teste com 620 sockets locais ([resultado](docs/load-result.json)). `pnpm exec tsx scripts/player-spike.ts` tenta carregar o player real num Chromium sem janela e grava o resultado em [player-spike-result.json](docs/player-spike-result.json). Nenhum dos dois substitui um teste com TV, som e celulares de verdade.
 
-## Instalar num servidor de casa
+## Instalar num servidor
 
-O [guia de instalação](INSTALAR.md) explica como subir tudo com Docker usando o `compose.server.yaml`, com front e API compilados, PostgreSQL persistente e scripts para Linux e Windows. O `pnpm build` gera `dist/web` e `dist/server`, e o `pnpm start` roda essa versão lendo o `.env.server`, sem precisar do Vite. A versão compilada foi testada; o Docker ainda precisa rodar de verdade no servidor de destino.
+O [guia de instalação](INSTALAR.md) explica como subir tudo com Docker num computador que fica ligado. O script `INICIAR.ps1` (Windows) ou `iniciar.sh` (Linux) confere a configuração, gera a senha do banco e sobe o app, o PostgreSQL e um túnel da Cloudflare, deixando o karaokê num endereço fixo com HTTPS. Também dá para usar só na rede de casa, sem domínio. O `pnpm build` gera `dist/web` e `dist/server`, e o `pnpm start` roda essa versão lendo o `.env.server`, sem precisar do Vite. A versão compilada foi testada; o Docker ainda precisa rodar de verdade no servidor de destino.
 
 ## Documentação
 

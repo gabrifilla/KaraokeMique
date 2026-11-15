@@ -33,6 +33,7 @@ const entries = [
   ".dockerignore",
   ".env.server.example",
   "compose.server.yaml",
+  "compose.tunnel.yaml",
   "INICIAR.ps1",
   "iniciar.sh",
   "INSTALAR.md",
