@@ -82,9 +82,9 @@ export function GifSpotlight({
   hidden: boolean;
   display?: "normal" | "expanded" | "minimized";
 }) {
-  const gif = hidden
-    ? undefined
-    : reactions.filter((r) => r.type === "GIF").at(-1);
+  // Sem Array.prototype.at (Chromium 92+) para funcionar em navegadores de TV.
+  const gifs = hidden ? [] : reactions.filter((r) => r.type === "GIF");
+  const gif = gifs[gifs.length - 1];
   if (!gif) return null;
   const image = (
     <img

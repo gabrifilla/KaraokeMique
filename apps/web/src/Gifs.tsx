@@ -7,7 +7,13 @@ export async function giphy(path: string, params: Record<string, string> = {}) {
     );
   const u = new URL(`https://api.giphy.com/v1/gifs/${path}`);
   u.search = new URLSearchParams({ api_key: key, ...params }).toString();
-  const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+  // AbortSignal.timeout só existe a partir do Chromium 103; navegadores de TV
+  // mais antigos lançariam erro e o GIF seria descartado em silêncio.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  const r = await fetch(u, { signal: controller.signal }).finally(() =>
+    clearTimeout(timer),
+  );
   if (!r.ok)
     throw new Error(
       "GIPHY indisponível ou cota esgotada. Os emojis continuam disponíveis.",
