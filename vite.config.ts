@@ -43,6 +43,12 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    build: { outDir: "../../dist/web", emptyOutDir: true },
+    build: {
+      outDir: "../../dist/web",
+      emptyOutDir: true,
+      // Navegadores de TV (webOS/Tizen) costumam ser Chromium 87+, sem `dvh`.
+      // Com esse alvo o minificador mantém os fallbacks em `vh` do palco.
+      cssTarget: ["chrome87", "safari14", "firefox78"],
+    },
   };
 });

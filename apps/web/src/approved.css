@@ -1113,6 +1113,7 @@ h2 {
 @media (max-width: 650px) {
   .stage-shell {
     height: auto;
+    min-height: 100vh;
     min-height: 100dvh;
     overflow: visible;
   }

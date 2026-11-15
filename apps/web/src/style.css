@@ -1447,6 +1447,10 @@ button[aria-pressed="true"] {
 }
 .dialog-overlay {
   position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   inset: 0;
   background: #05091bd9;
   z-index: 20;
@@ -1458,6 +1462,7 @@ button[aria-pressed="true"] {
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(90vw, 460px);
+  max-height: 85vh;
   max-height: 85dvh;
   overflow: auto;
   border: 1px solid #596587;
