@@ -290,8 +290,8 @@ function Entrance() {
                 ))}
               </div>
               <small>
-                A fila prioriza quem cantou menos. Notas de 0 a 10, sem
-                autovoto. Dois votos perfeitos podem render um bis.
+                Quem cantou menos canta antes. A galera dá nota de 0 a 10 e
+                ninguém vota em si. Se todo mundo der 10, rola bis.
               </small>
               <button disabled={busy || invite.data?.open === false}>
                 {busy
@@ -361,7 +361,7 @@ function Entrance() {
               />
               <div>
                 <h3>Solta a voz</h3>
-                <p>Cante, reaja e vote. Todo mundo participa.</p>
+                <p>Cante, mande reações e dê nota pra quem acabou de cantar.</p>
               </div>
             </li>
           </ol>
@@ -545,7 +545,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     s.on("connect_error", () => {
       setOnline(false);
       setError(
-        "Não foi possível conectar. Sua sessão pode ter sido removida ou substituída.",
+        "Não deu pra conectar. Pode ser que você não esteja mais na sala ou que ela tenha sido aberta em outro aparelho.",
       );
     });
     s.on("room.state", applySnapshot);
@@ -805,7 +805,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         <span className="pill">{room.queue.length} na fila</span>
       </div>
       <p className="muted">
-        Previsão: a fila dá vez a quem cantou menos. Sua posição pode mudar.
+        Quem cantou menos passa na frente, então essa ordem ainda pode mudar.
       </p>
       {room.queue.length === 0 ? (
         <p>A primeira música está esperando por você.</p>
@@ -852,8 +852,8 @@ function RoomView({ stage = false }: { stage?: boolean }) {
             s.status === "WAITING" && !room.queue.some((q) => q.id === s.id),
         ) && (
           <p className="muted">
-            Há músicas suspensas de participantes ausentes. Elas retornam na
-            reconexão.
+            Algumas músicas estão pausadas porque quem pediu saiu. Elas voltam
+            pra fila quando a pessoa reconectar.
           </p>
         )}
     </section>
@@ -903,14 +903,15 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         ) && (
           <>
             <Confirm label="Pular música" onConfirm={() => act("SKIP")}>
-              Uma música já iniciada consome o turno e fica sem nota.
+              Se a música já começou, conta como a vez da pessoa e fica sem
+              nota.
             </Confirm>
             <Confirm
               label="Cancelar por falha"
               onConfirm={() => act("TECHNICAL_CANCEL")}
             >
-              Devolve o turno consumido. Adicione outro vídeo para tentar
-              novamente.
+              A pessoa não perde a vez. Adicione outro vídeo para tentar de
+              novo.
             </Confirm>
           </>
         )}
@@ -944,8 +945,8 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       )}
       {room.integrationMode === "demo" && (
         <div className="demo-banner">
-          DEMONSTRAÇÃO · Busca e player simulados. Votos, fila, salas e
-          persistência são reais.
+          DEMONSTRAÇÃO · A busca e o player são simulados. Salas, fila e votos
+          funcionam de verdade.
         </div>
       )}
       {!online && (
@@ -1050,8 +1051,9 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 <section className="card encore-card">
                   <h2>Nota 10! Quer cantar mais uma?</h2>
                   <p>
-                    Promova sua música já na fila. Depois do bis, aguarde quatro
-                    apresentações concluídas para poder ganhar outro bônus.
+                    Sua próxima música da fila passa pra frente. Depois desse
+                    bis, você só ganha outro quando mais quatro músicas
+                    terminarem.
                   </p>
                   <div className="actions">
                     <button
@@ -1230,7 +1232,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                       <p className="muted">
                         {room.integrationMode === "demo"
                           ? "Sugestões de demonstração, sem vídeos reais."
-                          : "Uma seleção de karaokês encontrados no YouTube para inspirar sua escolha."}
+                          : "Karaokês do YouTube pra você se inspirar."}
                       </p>
                       <button
                         className="quiet"
@@ -1528,8 +1530,8 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                       label="Encerrar sala"
                       onConfirm={() => act("CLOSE")}
                     >
-                      Encerra a sessão para todos. O resumo fica disponível por
-                      24 horas.
+                      A festa acaba para todo mundo. O resumo dos shows fica
+                      disponível por 24 horas.
                     </Confirm>
                   </>
                 )}
@@ -1557,7 +1559,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                   .filter((p) => p.outcome === "COMPLETED")
                   .map((p) => result(p))}
                 {room.history.length === 0 && !room.current && (
-                  <p>A festa ainda não teve uma apresentação concluída.</p>
+                  <p>Ninguém terminou de cantar ainda.</p>
                 )}
               </section>
             )}

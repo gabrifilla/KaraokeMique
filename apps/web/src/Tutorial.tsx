@@ -148,9 +148,9 @@ const steps = [
     content: (
       <>
         <p>
-          A ordem de <strong>Próximas vozes</strong> aparece na TV. A fila
-          prioriza quem cantou menos; dentro dos seus pedidos, vem primeiro a
-          música mais antiga.
+          A ordem de <strong>Próximas vozes</strong> aparece na TV. Quem cantou
+          menos canta antes e, entre os seus pedidos, sai primeiro o mais
+          antigo.
         </p>
         <p>
           Com o palco conectado e <strong>Tocar fila automaticamente</strong>{" "}
@@ -158,8 +158,8 @@ const steps = [
           uma. O título e o nome de quem canta ficam no topo do palco.
         </p>
         <p>
-          A chegada de alguém que cantou menos pode mudar a previsão da fila.
-          Ter vários pedidos não reserva várias apresentações seguidas.
+          Se chegar alguém que cantou menos, essa pessoa pode passar na sua
+          frente. E pedir várias músicas não garante cantar várias seguidas.
         </p>
       </>
     ),
@@ -312,9 +312,8 @@ export function Tutorial() {
             ao último bis.
           </h1>
           <p>
-            Seu passo a passo para colocar a festa na TV, entrar pelo celular e
-            aproveitar o karaokê. Comece do início ou vá direto à etapa em que
-            precisa de ajuda.
+            Como colocar a festa na TV e entrar pelo celular. Siga do começo ou
+            pule direto para a parte em que você travou.
           </p>
         </div>
         <div className="tutorial-layout">

@@ -1,8 +1,8 @@
 # Instalar Karaoke Míque no servidor da casa
 
-O pacote funciona em Linux com Docker Engine + Compose ou em Windows compatível com Docker Desktop, usando **containers Linux**. O computador servidor fica ligado; TV/celulares só precisam de navegador e da mesma rede. Internet continua necessária para YouTube, GIFs e a primeira instalação.
+O pacote roda em Linux com Docker Engine e Compose, ou em Windows com Docker Desktop usando **containers Linux**. O computador que vai ser o servidor precisa ficar ligado. A TV e os celulares só precisam de um navegador e de estar na mesma rede. A internet continua necessária para o YouTube, os GIFs e a primeira instalação.
 
-Se for **Windows Server**, prefira uma máquina virtual Linux para o Docker: Docker Desktop não é suportado nesse sistema. Fontes oficiais: [Docker no Linux](https://docs.docker.com/engine/install/), [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/), [Compose](https://docs.docker.com/compose/install/).
+Se o servidor for **Windows Server**, use uma máquina virtual Linux para o Docker, porque o Docker Desktop não roda nesse sistema. Fontes oficiais: [Docker no Linux](https://docs.docker.com/engine/install/), [Docker Desktop no Windows](https://docs.docker.com/desktop/setup/install/windows-install/), [Compose](https://docs.docker.com/compose/install/).
 
 ## 1. Preparar
 
@@ -24,11 +24,11 @@ YOUTUBE_API_KEY=COLOQUE_SUA_CHAVE_YOUTUBE
 VITE_GIPHY_API_KEY=COLOQUE_SUA_CHAVE_GIPHY
 ```
 
-Substitua o IP pelo do servidor e os exemplos pelas suas credenciais. Não coloque as linhas de exemplo acima em produção sem trocar os valores. As chaves são as mesmas integrações usadas no projeto: YouTube Data API v3 e GIPHY. Sem YouTube a busca informa indisponibilidade; sem GIPHY, emojis continuam disponíveis. Não há vídeos falsos neste modo.
+Troque o IP pelo do seu servidor e os textos em maiúsculas pela sua senha e pelas suas chaves. As chaves são as mesmas que o projeto já usa: YouTube Data API v3 e GIPHY. Sem a do YouTube, a busca avisa que está indisponível. Sem a do GIPHY, os emojis continuam funcionando. Nesse modo o app nunca mostra vídeos de mentira.
 
-Não compartilhe `.env.server`. `VITE_GIPHY_API_KEY` é chave web e entra no frontend por desenho; `YOUTUBE_API_KEY` fica no backend. Restrições de origem das chaves precisam aceitar o novo hostname. O pacote distribuído não contém suas chaves ou dados existentes.
+Não compartilhe o `.env.server`. A `YOUTUBE_API_KEY` fica só no servidor. A `VITE_GIPHY_API_KEY` vai junto no código do site, porque é assim que o GIPHY funciona em apps web. Se as chaves tiverem restrição de origem, libere o endereço novo nelas. O pacote não leva nenhuma chave nem dado seu.
 
-As demais linhas do exemplo podem ficar como estão ao usar Docker. `DATABASE_URL` do exemplo é apenas para instalação sem Docker; o Compose monta a conexão do banco automaticamente. A senha deve conter somente letras/números para essa URL não precisar de escapes.
+Usando Docker, as outras linhas do exemplo podem ficar como estão. O `DATABASE_URL` só serve para instalar sem Docker; com Docker, o Compose monta a conexão sozinho. Use só letras e números na senha, para ela funcionar dentro dessa URL sem precisar de escape.
 
 ## 3. Iniciar
 
@@ -52,19 +52,19 @@ Ou, nos dois sistemas:
 docker compose --env-file .env.server -f compose.server.yaml up -d --build --wait --wait-timeout 180
 ```
 
-A primeira execução baixa dependências/imagens e compila. Aguarde os serviços ficarem saudáveis. Migração inicial do banco é automática e idempotente. Não é necessário instalar Node/pnpm no computador host se usar Docker.
+Na primeira vez ele baixa as dependências e as imagens e compila tudo, então demora um pouco. Espere os serviços ficarem saudáveis. O banco é criado sozinho, e rodar de novo não estraga nada. Com Docker, você não precisa instalar Node nem pnpm no servidor.
 
 ## 4. Abrir na TV e celulares
 
-Abra exatamente o `WEB_ORIGIN`, por exemplo **http://karaoke.192.168.1.100.sslip.io:8080**, em todos os dispositivos. `sslip.io` resolve o hostname para o IP privado; o tráfego da aplicação continua dentro da casa. Se a rede bloquear esse DNS, configure um nome local/DNS compatível ou use o IP privado para diagnosticar; alguns vídeos YouTube já recusaram reprodução pelo IP direto no ensaio deste projeto.
+Abra exatamente o endereço do `WEB_ORIGIN`, por exemplo **http://karaoke.192.168.1.100.sslip.io:8080**, em todos os aparelhos. O `sslip.io` só traduz esse nome para o IP do servidor, e o tráfego continua dentro de casa. Se a rede bloquear esse serviço, configure um nome local ou use o IP direto só para investigar o problema: nos testes, o YouTube recusou alguns vídeos abertos pelo IP.
 
-Se necessário, permita a porta TCP **8080 somente na rede privada** do firewall. Não abra a porta do roteador para a internet. O PostgreSQL não publica porta no host. HTTP com `ALLOW_HTTP_LAN=true` é uma opção explícita para a rede da casa, sem criptografia; endereço público em HTTP continua recusado. Para internet, use HTTPS e desligue essa opção.
+Se o firewall bloquear, libere a porta TCP **8080 só para a rede privada**. Não abra essa porta no roteador para a internet. O PostgreSQL não fica exposto fora do Docker. O `ALLOW_HTTP_LAN=true` libera HTTP sem criptografia apenas para endereços da rede de casa; um endereço público em HTTP continua bloqueado. Para usar pela internet, configure HTTPS e desligue essa opção.
 
-Crie uma sala pelo celular. Na TV, escolha **Usar como palco**. Escaneie o QR da TV e aprove pelo celular do anfitrião, ou informe o código de seis dígitos em **Palco → Conectar ou reconfigurar TV**. Código livre de desenvolvimento fica desativado. Tela cheia e a primeira liberação de áudio podem exigir uma ação na TV.
+Crie uma sala pelo celular. Na TV, escolha **Usar como palco**. Escaneie o QR da TV e aprove pelo celular do anfitrião, ou digite o código de seis dígitos em **Palco → Conectar ou reconfigurar TV**. Aqui o atalho de desenvolvimento, que aceita qualquer código, fica desligado. A tela cheia e o primeiro som podem pedir um toque na própria TV.
 
 ## Ligar, parar, atualizar e diagnosticar
 
-Os containers usam `restart: unless-stopped`. No Linux mantenha o Docker habilitado no boot; no Windows Desktop depende da inicialização do Docker/sessão do sistema.
+Os containers usam `restart: unless-stopped`, então voltam sozinhos depois de reiniciar o servidor. No Linux, deixe o Docker ativado para iniciar com o sistema. No Windows, eles só voltam quando o Docker Desktop abrir, o que depende de alguém entrar na conta.
 
 ```sh
 # Ver estado
@@ -79,27 +79,27 @@ docker compose --env-file .env.server -f compose.server.yaml up -d --wait
 docker compose --env-file .env.server -f compose.server.yaml up -d --build --wait
 ```
 
-Atualize somente fora de uma apresentação. Preserve `.env.server` e o volume do banco. Não rode duas instâncias da aplicação para o mesmo banco: o worker atual é de instância única. Não use `down -v`, pois remove o volume com dados. Trocar a senha no arquivo após o banco ter sido criado não altera automaticamente a senha no PostgreSQL.
+Não atualize no meio de uma festa. Guarde o `.env.server` e o volume do banco. Não rode duas cópias do app no mesmo banco, porque a fila só suporta uma instância. Nunca use `down -v`: ele apaga o volume com os dados. Se você trocar a senha no arquivo depois que o banco já existe, a senha do PostgreSQL não muda junto.
 
-| Sintoma | O que conferir |
-| --- | --- |
-| Docker não encontrado | Instalação/daemon aberto, containers Linux e Compose disponíveis |
-| Banco ou app não saudável | Logs, senha preenchida e `WEB_ORIGIN` correto |
-| Abre no servidor, não no celular | Mesma rede, IP correto, firewall privado e rede de convidados sem isolamento |
+| Sintoma                          | O que conferir                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| Docker não encontrado            | Instalação/daemon aberto, containers Linux e Compose disponíveis               |
+| Banco ou app não saudável        | Logs, senha preenchida e `WEB_ORIGIN` correto                                  |
+| Abre no servidor, não no celular | Mesma rede, IP correto, firewall privado e rede de convidados sem isolamento   |
 | Redireciona para endereço errado | Corrigir `WEB_ORIGIN`; manter porta igual a `APP_PORT` e reiniciar/recriar app |
-| Busca/GIF indisponível | Chaves, quotas, API habilitada e acesso à internet |
-| YouTube/autoplay bloqueado | Gesto inicial na TV, hostname configurado e diagnóstico do player |
+| Busca/GIF indisponível           | Chaves, quotas, API habilitada e acesso à internet                             |
+| YouTube/autoplay bloqueado       | Gesto inicial na TV, hostname configurado e diagnóstico do player              |
 
 ## Backup do banco
 
-Na pasta do projeto, crie a pasta `backups` (Explorer/gerenciador de arquivos ou `mkdir backups`) e execute os dois comandos abaixo. O dump é gerado dentro do container e copiado como arquivo, sem redirecionamento binário pelo PowerShell:
+Na pasta do projeto, crie uma pasta `backups` (pelo gerenciador de arquivos ou com `mkdir backups`) e rode os dois comandos abaixo. O primeiro gera o backup dentro do container e o segundo copia o arquivo para fora. Assim o PowerShell não corrompe o arquivo binário:
 
 ```sh
 docker compose --env-file .env.server -f compose.server.yaml exec -T database pg_dump -U karaoke -d karaoke -Fc -f /tmp/karaoke-backup.dump
 docker compose --env-file .env.server -f compose.server.yaml cp database:/tmp/karaoke-backup.dump ./backups/karaoke-backup.dump
 ```
 
-Renomeie o arquivo com a data e guarde em outro disco. Contém dados de salas/sessões, portanto mantenha acesso restrito. Para restaurar **substituindo o banco atual**, faça primeiro um backup atual, pare o app e só então execute:
+Coloque a data no nome do arquivo e guarde em outro disco. Ele tem os dados das salas e das sessões, então não deixe em lugar público. Restaurar **substitui o banco atual**. Antes, faça um backup do estado de agora, pare o app e só então rode:
 
 ```sh
 docker compose --env-file .env.server -f compose.server.yaml stop app
@@ -118,8 +118,8 @@ pnpm build
 pnpm start
 ```
 
-`pnpm build` lê `.env.server` se existir; gera `dist/web` e `dist/server`, incluindo a migração SQL. `pnpm start` usa esse arquivo e executa JavaScript compilado, sem tsx nem Vite. Use o serviço/supervisor do sistema para mantê-lo ativo após reiniciar. Não usa automaticamente o PostgreSQL de desenvolvimento do outro computador.
+O `pnpm build` lê o `.env.server`, se ele existir, e gera `dist/web` e `dist/server` com a migração SQL junto. O `pnpm start` usa esse mesmo arquivo e roda o JavaScript compilado, sem tsx nem Vite. Para o app voltar sozinho depois de reiniciar a máquina, cadastre-o como serviço do sistema. Ele não enxerga o PostgreSQL de desenvolvimento de outro computador.
 
-## Estado da validação
+## O que já foi testado
 
-Build e execução compilada são verificados localmente. **Docker não está disponível na máquina de desenvolvimento; a imagem e o Compose ainda precisam de execução real no servidor de destino.** A configuração não foi publicada nem instalada remotamente. TV/celulares físicos, áudio e escaneamento do QR precisam do ensaio na rede da casa.
+O build e a versão compilada foram testados no computador de desenvolvimento. **Esse computador não tem Docker, então a imagem e o Compose ainda precisam rodar de verdade no servidor de destino.** Nada foi instalado em outra máquina ainda. TV e celulares de verdade, o som e a leitura do QR precisam de um teste na rede da casa.

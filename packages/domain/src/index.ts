@@ -111,7 +111,7 @@ export function member(room: Room, actor: Actor) {
   requireRule(
     actor.role === "member",
     "FORBIDDEN",
-    "Ação exclusiva de participante.",
+    "Só quem está na sala pode fazer isso.",
     403,
   );
   const p = room.people.find((p) => p.id === actor.id);
@@ -317,7 +317,7 @@ export function apply(
         ).length < 5 &&
           room.songs.filter((s) => s.status === "WAITING").length < 100,
         "QUEUE_LIMIT",
-        "Limite de músicas atingido.",
+        "A fila já está cheia. Cada pessoa pode ter até 5 músicas esperando.",
       );
       requireRule(
         !room.songs.some(
@@ -343,7 +343,7 @@ export function apply(
       requireRule(
         s && s.status === "WAITING",
         "INVALID_SONG",
-        "Música não está aguardando.",
+        "Essa música não está mais esperando na fila.",
       );
       requireRule(
         me && (s.personId === me.id || me.id === room.hostId),
@@ -359,14 +359,14 @@ export function apply(
       requireRule(
         room.state === "LOBBY" || room.state === "RESULTS",
         "INVALID_STATE",
-        "Conclua a apresentação atual.",
+        "Termine a apresentação atual primeiro.",
         409,
       );
       if (room.state === "RESULTS")
         requireRule(
           now - (room.current?.round?.closedAt || 0) >= 5000,
           "RESULT_DELAY",
-          "Aguarde cinco segundos de resultado.",
+          "Deixe o resultado na tela por pelo menos cinco segundos.",
           409,
         );
       requireRule(
@@ -375,7 +375,7 @@ export function apply(
         "Conecte o palco antes de preparar.",
       );
       const s = forecast(room, now)[0];
-      requireRule(s, "QUEUE_EMPTY", "Não há músicas elegíveis.");
+      requireRule(s, "QUEUE_EMPTY", "Não tem música pronta pra tocar na fila.");
       archive(room);
       const isEncore =
         room.offer?.state === "ACCEPTED" &&
@@ -533,7 +533,7 @@ export function apply(
       requireRule(
         me && !encoreOnCooldown(room, me.id),
         "ENCORE_COOLDOWN",
-        "Aguarde quatro apresentações concluídas após seu último bis para ganhar outra prioridade.",
+        "Depois de um bis, você só ganha outro quando mais quatro músicas terminarem.",
       );
       requireRule(
         me && room.state === "RESULTS" && room.offer?.personId === me.id,

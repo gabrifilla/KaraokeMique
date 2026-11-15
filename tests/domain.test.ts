@@ -338,7 +338,7 @@ describe("Votação e bis", () => {
     expect(r.current!.round!.average).toBe(10);
     expect(["OFFERED", "ACCEPTED"]).not.toContain(r.offer?.state);
     expect(() => run(r, "A", "ENCORE", { accept: true }, tick)).toThrow(
-      "quatro apresentações",
+      "quatro músicas",
     );
     advance();
     expect(r.songs.find((s) => s.id === r.current!.songId)!.video.id).toBe(
@@ -366,7 +366,7 @@ describe("Votação e bis", () => {
       run(r, "A", "PREPARE", {}, now + 5000);
       run(r, "A", kind, {}, now + 5000);
       expect(() => run(r, "A", "ENCORE", { accept: true }, now + 5000)).toThrow(
-        "quatro apresentações",
+        "quatro músicas",
       );
     },
   );
@@ -384,7 +384,7 @@ describe("Votação e bis", () => {
     r.offer = { personId: "A", songId: "A2", state: "ACCEPTED" };
     expect(forecast(r, now)[0].id).toBe("B1");
     expect(() => run(r, "A", "ENCORE", { accept: true })).toThrow(
-      "quatro apresentações",
+      "quatro músicas",
     );
     maintain(r, now);
     expect(r.offer.state).toBe("CANCELLED");
@@ -418,7 +418,7 @@ describe("Votação e bis", () => {
         expect(forecast(r, now)[0].id).toBe("A2");
       } else
         expect(() => run(r, "A", "ENCORE", { accept: true })).toThrow(
-          "quatro apresentações",
+          "quatro músicas",
         );
     },
   );
@@ -464,7 +464,7 @@ describe("Votação e bis", () => {
     run(r, "C", "VOTE", { score: 10 });
     expect(r.offer).toBeUndefined();
     expect(() => run(r, "A", "ENCORE", { accept: true })).toThrow(
-      "quatro apresentações",
+      "quatro músicas",
     );
   });
   it("música adicionada depois não gera crédito retroativo", () => {

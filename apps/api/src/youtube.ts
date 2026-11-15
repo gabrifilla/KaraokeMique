@@ -40,7 +40,7 @@ async function api(endpoint: string, params: Record<string, string>) {
       );
       throw new RuleError(
         quota ? "PROVIDER_QUOTA_EXCEEDED" : "PROVIDER_UNAVAILABLE",
-        "YouTube indisponível. A fila continua preservada.",
+        "O YouTube não respondeu agora. A fila continua do jeito que estava.",
         503,
       );
     }
@@ -138,7 +138,7 @@ export async function validateVideo(id: string) {
   requireRule(
     video,
     "VIDEO_UNAVAILABLE",
-    "Vídeo indisponível, ao vivo, longo ou sem incorporação.",
+    "Esse vídeo não dá pra usar: ele está indisponível, é ao vivo, é longo demais ou o dono não deixa tocar fora do YouTube.",
   );
   return video;
 }
