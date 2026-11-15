@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-08T20:15:11.718Z",
+  "checks": [
+    {
+      "name": "YouTube search",
+      "status": 200,
+      "bytes": 7603,
+      "credentialPresent": true
+    },
+    {
+      "name": "YouTube IFrame script",
+      "status": 200,
+      "bytes": 993
+    },
+    {
+      "name": "GIPHY search",
+      "status": 200,
+      "bytes": 9123,
+      "credentialPresent": true
+    }
+  ],
+  "limitations": [
+    "HTTP não comprova reprodução/autoplay no navegador.",
+    "Busca e compartilhamento real de GIF exigem chaves válidas; não há fallback silencioso.",
+    "Cotas e contratação devem ser verificadas nas contas dos fornecedores."
+  ]
+}

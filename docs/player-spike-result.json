@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-08T20:05:28.319Z",
+  "browser": "Chromium headless, origin http://localhost:5173",
+  "video": "M7lc1UVf-VE (exemplo da documentação IFrame)",
+  "observed": {
+    "events": []
+  },
+  "limitations": "Não comprova som em TV, autoplay de aparelhos físicos, término natural ou disponibilidade de vídeos de karaokê."
+}

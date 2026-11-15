@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-08T20:05:11.077Z",
+  "scenario": "20 salas × (30 participantes + 1 palco), PostgreSQL real e Socket.IO local",
+  "connections": 620,
+  "firstSnapshots": 620,
+  "failures": 0,
+  "initialSnapshotP95Ms": 180,
+  "heartbeatAcknowledged": 620,
+  "heartbeatBatchMs": 1177,
+  "limits": "Ensaio curto, sem buscas externas, áudio, vídeo, votos ou carga sustentada. Não é comprovação de SLA."
+}

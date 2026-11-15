@@ -1,0 +1,263 @@
+.tutorial-invite {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  margin-top: 30px;
+}
+.how-it-works .tutorial-invite p {
+  font-size: 1rem;
+  color: var(--text);
+}
+.tutorial-invite .button {
+  min-height: 48px;
+  white-space: normal;
+  text-align: center;
+}
+.tutorial-shell {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 24px 32px;
+  color: var(--text);
+}
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.tutorial-header > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.tutorial-header > a .icon {
+  width: 18px;
+  transform: rotate(180deg);
+}
+.tutorial-header > span {
+  font: 700 1.5rem var(--heading);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tutorial-intro {
+  padding: 42px 0 36px;
+  max-width: 750px;
+}
+.tutorial-intro h1 {
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 22px;
+}
+.tutorial-intro p {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 65ch;
+}
+.tutorial-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+.tutorial-layout > nav {
+  position: sticky;
+  top: 24px;
+  font-size: 0.82rem;
+}
+.tutorial-layout > nav h2 {
+  font:
+    700 1rem Inter,
+    sans-serif;
+  margin-bottom: 14px;
+}
+.tutorial-layout > nav ol {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 0;
+  color: var(--muted);
+}
+.tutorial-layout > nav li {
+  padding: 5px 0;
+  line-height: 1.5;
+}
+.tutorial-layout > nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.tutorial-layout > nav a:hover {
+  color: var(--yellow);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.tutorial-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+.tutorial-steps > li {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 30px;
+  margin-bottom: 30px;
+}
+.tutorial-steps section {
+  scroll-margin-top: 24px;
+}
+.tutorial-steps h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 2rem;
+  line-height: 1.15;
+  margin-bottom: 18px;
+}
+.tutorial-steps h2 > span {
+  font-size: 1.25rem;
+  color: var(--yellow);
+  min-width: 24px;
+}
+.tutorial-steps p,
+.tutorial-steps li {
+  font-size: 0.94rem;
+  line-height: 1.8;
+}
+.tutorial-steps p + p {
+  margin-top: 14px;
+}
+.tutorial-steps ul,
+.tutorial-steps ol {
+  padding-left: 24px;
+  margin: 14px 0;
+}
+.tutorial-steps ul {
+  list-style: disc;
+}
+.tutorial-steps ol {
+  list-style: decimal;
+}
+.tutorial-steps li + li {
+  margin-top: 10px;
+}
+.tutorial-steps strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.tutorial-steps p.tutorial-tip {
+  margin-top: 20px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px 18px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.tutorial-help h2,
+.tutorial-ready h2 {
+  font-size: 2rem;
+  margin-bottom: 18px;
+}
+.tutorial-help details {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+.tutorial-help summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: list-item;
+  align-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.tutorial-help details p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.8;
+  margin-top: 10px;
+}
+.tutorial-ready {
+  padding: 34px 0;
+}
+.tutorial-ready > .actions {
+  margin: 20px 0;
+}
+.tutorial-ready > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.85rem;
+}
+.tutorial-shell > footer {
+  border-top: 1px solid var(--line);
+  padding: 24px 0 10px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+@media (max-width: 760px) {
+  .tutorial-shell {
+    padding: 20px;
+  }
+  .tutorial-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .tutorial-layout > nav {
+    position: static;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tutorial-layout > nav a {
+    min-height: 44px;
+  }
+  .tutorial-header {
+    gap: 12px;
+  }
+  .tutorial-header > span {
+    font-size: 1.2rem;
+  }
+  .tutorial-intro {
+    padding: 30px 0;
+  }
+  .tutorial-intro p {
+    font-size: 0.9rem;
+  }
+  .tutorial-steps h2 {
+    font-size: 1.8rem;
+    gap: 10px;
+  }
+  .tutorial-steps p,
+  .tutorial-steps li {
+    font-size: 0.9rem;
+  }
+  .tutorial-invite {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .tutorial-invite .button {
+    width: 100%;
+  }
+  .tutorial-ready .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .tutorial-ready .button {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.tutorial-shell) {
+    scroll-behavior: auto;
+  }
+}

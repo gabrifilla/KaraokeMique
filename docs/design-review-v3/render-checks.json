@@ -1,0 +1,74 @@
+[
+  {
+    "theme": "a",
+    "view": "player",
+    "width": 390,
+    "scroll": 390,
+    "height": 844,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "search",
+    "width": 390,
+    "scroll": 390,
+    "height": 844,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "vote",
+    "width": 390,
+    "scroll": 390,
+    "height": 844,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "stage",
+    "width": 1280,
+    "scroll": 1280,
+    "height": 720,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "result",
+    "width": 1280,
+    "scroll": 1280,
+    "height": 720,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "mine",
+    "width": 390,
+    "scroll": 390,
+    "height": 844,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "people",
+    "width": 390,
+    "scroll": 390,
+    "height": 850,
+    "broken": [],
+    "errors": []
+  },
+  {
+    "theme": "a",
+    "view": "host",
+    "width": 390,
+    "scroll": 390,
+    "height": 861,
+    "broken": [],
+    "errors": []
+  }
+]

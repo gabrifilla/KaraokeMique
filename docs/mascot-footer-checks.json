@@ -1,0 +1,52 @@
+[
+  {
+    "route": "/",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/rooms/new",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/join",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/tutorial",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/stage/pair",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/stage/tv",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/connect-tv",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/r/nonexistent",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/missing",
+    "footer": 1,
+    "brokenImages": []
+  },
+  {
+    "route": "/stage/nonexistent",
+    "footer": 0,
+    "brokenImages": []
+  }
+]

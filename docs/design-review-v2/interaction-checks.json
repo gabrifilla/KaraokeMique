@@ -1,0 +1,50 @@
+[
+  {
+    "theme": "a",
+    "width": 360,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "a",
+    "width": 390,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "b",
+    "width": 360,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "b",
+    "width": 390,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "c",
+    "width": 360,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "c",
+    "width": 390,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  }
+]

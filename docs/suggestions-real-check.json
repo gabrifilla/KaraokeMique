@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "mode": "real",
+  "theme": {
+    "id": "pop-internacional",
+    "label": "Pop internacional · anos 2000"
+  },
+  "items": 12,
+  "titles": [
+    "⭐ Tremendo Vacilão (Na Madrugada, Abandonada e Não Atende o 📱) - Perlla (Karaokê Version) (Cover)",
+    "Umbrella - Rihanna (Karaoke Songs With Lyrics - Original Key)",
+    "⭐ Vagalumes (Vou Caçar + de Um Milhão) - Pollo & Ivo Mozart (Karaokê Version) (Cover)",
+    "Marjorie Estiano - Você Sempre Será (Versão Karaokê)"
+  ],
+  "next": {
+    "status": 200,
+    "theme": {
+      "id": "rock-nacional",
+      "label": "Rock nacional"
+    },
+    "items": 12
+  },
+  "rotated": true
+}

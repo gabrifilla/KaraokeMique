@@ -1,0 +1,19 @@
+{
+  "url": "https://bytes-remark-sounds-signed.trycloudflare.com",
+  "https": true,
+  "health": {
+    "status": "ok",
+    "mode": "real",
+    "developmentPairing": false
+  },
+  "productionPairing": true,
+  "roomCreation": true,
+  "guestJoin": true,
+  "stagePairing": true,
+  "emojiRealtime": true,
+  "gifsInitiallyExpanded": true,
+  "secureCookies": true,
+  "privateFilesBlocked": true,
+  "testRoomClosed": true,
+  "physicalMobileNetworkTest": false
+}

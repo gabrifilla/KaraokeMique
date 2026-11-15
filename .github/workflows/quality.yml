@@ -1,0 +1,34 @@
+name: quality
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.1
+        env:
+          POSTGRES_DB: karaoke_dev
+          POSTGRES_USER: karaoke
+          POSTGRES_PASSWORD: karaoke
+        ports: ["54329:5432"]
+        options: --health-cmd 'pg_isready -U karaoke -d karaoke_dev' --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://karaoke:karaoke@127.0.0.1:54329/karaoke_dev
+      INTEGRATION_MODE: demo
+      WEB_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm format:check
+      - run: pnpm test
+      - run: pnpm test:server
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

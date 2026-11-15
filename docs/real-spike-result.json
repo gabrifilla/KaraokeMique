@@ -1,0 +1,39 @@
+{
+  "at": "2026-11-09T00:31:35.934Z",
+  "origin": "http://karaoke.192.168.0.122.sslip.io:5176",
+  "checks": [
+    {
+      "name": "Criar sala para prova real",
+      "status": 201
+    },
+    {
+      "name": "Busca YouTube pela aplicação",
+      "status": 200,
+      "items": 12,
+      "mode": "real",
+      "firstVideoId": "yuRT7VXRMBI"
+    },
+    {
+      "name": "Player real sem clique para tocar",
+      "autoplay": true,
+      "playing": true
+    },
+    {
+      "name": "Busca GIPHY direta do browser",
+      "status": 200,
+      "items": 12
+    },
+    {
+      "name": "Compartilhamento GIF por ID e resolução no palco",
+      "status": 200,
+      "loaded": true,
+      "srcHost": "media0.giphy.com"
+    },
+    {
+      "name": "Término real via IFrame após seek técnico perto do fim",
+      "ended": true,
+      "zeroEligibleResult": true
+    }
+  ],
+  "limitations": "Chromium headless. Não substitui aprovação comercial, cota real de produção, autoplay/término/áudio em aparelhos ou piloto físico."
+}

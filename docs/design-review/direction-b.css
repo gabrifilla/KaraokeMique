@@ -1,0 +1,24 @@
+/* EXEMPLO ISOLADO B — festa com acabamento sóbrio. Não importado pela aplicação. */
+.room-title h1,
+.mobile-content h2,
+.mobile-content h3,
+.now-heading h1,
+.stage-sidebar h2,
+.tv-setup h1 { font-weight: 800; letter-spacing: -0.015em; }
+.card { border-radius: 16px; }
+button, .button { border-radius: 8px; box-shadow: none; }
+input { border-radius: 8px; }
+.current-art, .song-art, .avatar-large { border-radius: 12px; }
+.emoji-row button { border-radius: 12px; }
+.bottom-nav, .stage-sidebar .invite, .stage-sidebar .queue, .gif-spotlight { border-radius: 16px; }
+.bottom-nav a { border-radius: 8px; }
+.host-controls { border-style: solid; }
+.eyebrow { letter-spacing: 0.06em; font-weight: 700; }
+.pill, .on-air { border-radius: 8px; }
+.stage-tools button, .stage-tools .check { font-weight: 700; }
+.result-intro span { font-weight: 700; }
+.emoji-row button { box-shadow: 0 2px 4px #0d142b; }
+.vote-grid button[data-score] { box-shadow: 0 2px 5px #15357a; border-radius: 8px; }
+.vote-grid button[data-score="4"], .vote-grid button[data-score="5"], .vote-grid button[data-score="6"] { box-shadow: 0 2px 5px #0b4c46; }
+.vote-grid button[data-score="7"], .vote-grid button[data-score="8"], .vote-grid button[data-score="9"] { box-shadow: 0 2px 5px #402677; }
+.vote-grid button[data-score="10"] { box-shadow: 0 2px 5px #711639; }

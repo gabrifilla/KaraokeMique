@@ -1,0 +1,35 @@
+[
+  {
+    "width": 320,
+    "overflow": false,
+    "top": 0,
+    "focused": "H1",
+    "errors": [],
+    "steps": 10,
+    "navigation": true,
+    "faq": true,
+    "createLink": true
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "top": 0,
+    "focused": "H1",
+    "errors": [],
+    "steps": 10,
+    "navigation": true,
+    "faq": true,
+    "createLink": true
+  },
+  {
+    "width": 1366,
+    "overflow": false,
+    "top": 0,
+    "focused": "H1",
+    "errors": [],
+    "steps": 10,
+    "navigation": true,
+    "faq": true,
+    "createLink": true
+  }
+]

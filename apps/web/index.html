@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#191519" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/mascot/v3/portrait-original-redraw.png"
+    />
+    <title>Karaoke Míque · Solta a voz, pede Bis</title>
+    <script type="module">
+      // Captura de referência para o Figma, somente em desenvolvimento e sob demanda.
+      if (import.meta.env.DEV && location.hash.includes("figmacapture=")) {
+        const capture = document.createElement("script");
+        capture.src = "https://mcp.figma.com/mcp/html-to-design/capture.js";
+        capture.async = true;
+        document.head.append(capture);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

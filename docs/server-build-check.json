@@ -1,0 +1,13 @@
+{
+  "compiledServer": true,
+  "production": true,
+  "realMode": true,
+  "frontendAndApiSamePort": true,
+  "spaFallback": true,
+  "staticAssets": true,
+  "referrerPolicy": true,
+  "strictPairing": true,
+  "websocketSnapshot": true,
+  "databaseIsolated": true,
+  "dockerExecuted": false
+}

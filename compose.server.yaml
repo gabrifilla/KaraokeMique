@@ -1,0 +1,48 @@
+name: karaoke-mique
+services:
+  database:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: karaoke
+      POSTGRES_USER: karaoke
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Preencha a senha do banco em .env.server}
+    volumes:
+      - karaoke_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U karaoke -d karaoke"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+  app:
+    build:
+      context: .
+      args:
+        VITE_GIPHY_API_KEY: ${VITE_GIPHY_API_KEY:-}
+    image: karaoke-mique:local
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      SERVE_WEB: "true"
+      PORT: "3001"
+      DATABASE_URL: postgresql://karaoke:${POSTGRES_PASSWORD:?Preencha a senha do banco}@database:5432/karaoke
+      WEB_ORIGIN: ${WEB_ORIGIN:?Preencha o endereço do servidor em .env.server}
+      ALLOW_HTTP_LAN: ${ALLOW_HTTP_LAN:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      INTEGRATION_MODE: real
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+    ports:
+      - "${LISTEN_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:3001"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+volumes:
+  karaoke_data:

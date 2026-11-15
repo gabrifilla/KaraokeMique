@@ -1,0 +1,152 @@
+[
+  {
+    "screen": "jogador",
+    "variant": "atual",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "jogador",
+    "variant": "a",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "jogador",
+    "variant": "b",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "busca",
+    "variant": "atual",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "busca",
+    "variant": "a",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "busca",
+    "variant": "b",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "votacao",
+    "variant": "atual",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "votacao",
+    "variant": "a",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "votacao",
+    "variant": "b",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "screen": "palco",
+    "variant": "atual",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  {
+    "screen": "palco",
+    "variant": "a",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  {
+    "screen": "palco",
+    "variant": "b",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  {
+    "screen": "resultado",
+    "variant": "atual",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  {
+    "screen": "resultado",
+    "variant": "a",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  {
+    "screen": "resultado",
+    "variant": "b",
+    "maxGeometryDeltaPx": 0,
+    "colorChanges": 0,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  }
+]

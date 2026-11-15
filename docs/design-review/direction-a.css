@@ -1,0 +1,23 @@
+/* EXEMPLO ISOLADO A — catálogo musical. Não importado pela aplicação. */
+.room-title h1,
+.mobile-content h2,
+.mobile-content h3,
+.now-heading h1,
+.stage-sidebar h2,
+.tv-setup h1 {
+  font-family: Inter, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.card { border-radius: 12px; }
+button, .button, input { border-radius: 6px; box-shadow: none; }
+.current-art, .song-art, .avatar-large, .emoji-row button { border-radius: 8px; }
+.bottom-nav, .stage-sidebar .invite, .stage-sidebar .queue, .gif-spotlight { border-radius: 12px; }
+.bottom-nav a { border-radius: 6px; }
+.host-controls { border-style: solid; }
+.eyebrow { letter-spacing: 0.055em; font-weight: 700; }
+.pill, .on-air { border-radius: 5px; }
+.stage-sidebar .queue strong { font-weight: 700; letter-spacing: 0; }
+.stage-tools button, .stage-tools .check { font-weight: 700; letter-spacing: 0.01em; }
+.result-intro span { font-weight: 700; }
+.vote-grid button[data-score], .emoji-row button { box-shadow: none; border-radius: 6px; }

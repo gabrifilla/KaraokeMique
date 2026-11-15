@@ -1,0 +1,18 @@
+[
+  {
+    "theme": "a",
+    "width": 360,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  },
+  {
+    "theme": "a",
+    "width": 390,
+    "gifToggle": true,
+    "navigation": true,
+    "voteSelection": true,
+    "horizontalOverflow": false
+  }
+]

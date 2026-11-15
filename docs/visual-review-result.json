@@ -1,0 +1,95 @@
+{
+  "at": "2026-11-08T21:10:32.008Z",
+  "checks": [
+    {
+      "route": "/",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/rooms/new",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/join",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/rooms/new",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/join",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/rooms/new",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    },
+    {
+      "route": "/join",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "overflow": false,
+      "headingFont": "\"Nunito Sans\", Inter, sans-serif",
+      "bodyFont": "Inter, system-ui, sans-serif"
+    }
+  ]
+}
