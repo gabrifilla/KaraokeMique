@@ -32,6 +32,7 @@ import type {
 import { Icon } from "./Icons";
 import { PartyPreview } from "./PartyPreview";
 import { Tutorial } from "./Tutorial";
+import { GuidedTour, tourSeen, tourSteps } from "./GuidedTour";
 import { Brand, SiteLayout } from "./Branding";
 import {
   EmojiRain,
@@ -682,6 +683,16 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const act = (kind: Command["kind"], payload: Record<string, unknown> = {}) =>
     void command(kind, payload).catch(() => {});
   const host = room?.me.role === "member" && room?.hostId === room?.me.id;
+  const tourRole = host ? "host" : "guest";
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourChecked = useRef(false);
+  const roomReady = !!room && room.me.role === "member";
+  useEffect(() => {
+    // Primeira visita: o mascote guia a pessoa pela sala uma única vez.
+    if (stage || !roomReady || tourChecked.current) return;
+    tourChecked.current = true;
+    if (room!.state !== "CLOSED" && !tourSeen(tourRole)) setTourOpen(true);
+  }, [stage, roomReady]);
   const inviteUrl = room ? `${locationOrigin()}/join/${room.code}` : "";
   async function music(more = false) {
     const term = more ? searchedQuery || q.trim() : q.trim();
@@ -978,7 +989,22 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           <span className="connection">
             {online ? "● Conectado" : "○ Reconectando…"}
           </span>
+          <button
+            type="button"
+            className="quiet tour-help"
+            data-tour="help"
+            onClick={() => setTourOpen(true)}
+          >
+            <span aria-hidden="true">?</span> Tutorial
+          </button>
         </header>
+      )}
+      {tourOpen && !stage && room.me.role === "member" && (
+        <GuidedTour
+          role={tourRole}
+          steps={tourSteps(tourRole, `/r/${id}`)}
+          onClose={() => setTourOpen(false)}
+        />
       )}
       {room.integrationMode === "demo" && (
         <div className="demo-banner">
@@ -1180,7 +1206,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                   </section>
                 )}
                 {room.state !== "CLOSED" && (
-                  <section className="card reactions-card">
+                  <section
+                    className="card reactions-card"
+                    data-tour="reactions"
+                  >
                     <h2>Mande energia para o palco</h2>
                     <div className="emoji-row">
                       {["👏", "🔥", "❤️", "🌟", "🎉", "🎤"].map((e) => (
@@ -1229,6 +1258,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 <p className="eyebrow">SEU PRÓXIMO HIT</p>
                 <h2>Qual música você quer cantar?</h2>
                 <form
+                  data-tour="search"
                   onSubmit={(e) => {
                     e.preventDefault();
                     void music();
@@ -1408,7 +1438,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
             )}
             {tab === "stage" && host && (
               <>
-                <section className="card presentation-controls">
+                <section
+                  className="card presentation-controls"
+                  data-tour="stage-controls"
+                >
                   <h2>Controle do palco</h2>
                   <p className="connection">
                     {clock - room.stageSeen < 15000 && room.epoch > 0
@@ -1474,7 +1507,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                   </details>
                 </section>
                 {controls}
-                <details className="card stage-pairing" open={room.epoch === 0}>
+                <details
+                  className="card stage-pairing"
+                  open={room.epoch === 0 || tourOpen}
+                >
                   <summary>Conectar ou reconfigurar TV</summary>
                   <StageSetup
                     id={id}
@@ -1622,6 +1658,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
             ].map(([key, icon, label]) => (
               <Link
                 key={key}
+                data-tour={`nav-${key}`}
                 aria-current={tab === key ? "page" : undefined}
                 to={`/r/${id}${key === "room" ? "" : `/${key}`}`}
               >

@@ -170,12 +170,15 @@ const steps = [
     content: (
       <>
         <ol>
-          <li>Quando a música terminar, a votação aparece nos celulares.</li>
+          <li>
+            Nos <strong>últimos 20 segundos</strong> da música, a votação abre
+            nos celulares.
+          </li>
           <li>
             Escolha uma nota de <strong>0 a 10</strong> e toque em{" "}
-            <strong>Confirmar nota</strong>. Você tem até{" "}
-            <strong>dez segundos</strong>; a rodada pode terminar antes se todos
-            votarem.
+            <strong>Confirmar nota</strong>. A votação fica aberta até{" "}
+            <strong>dez segundos</strong> depois do fim da música; se todos já
+            tiverem votado, a nota sai logo que a música acaba.
           </li>
           <li>
             Acompanhe a revelação da média no palco, com a reação do mascote.
@@ -222,9 +225,10 @@ const steps = [
           </li>
         </ol>
         <p>
-          O GIF aparece na lateral do palco com o nome de quem enviou. A
-          confirmação de envio é um aviso discreto no topo do celular. O
-          anfitrião pode desativar reações ou GIFs.
+          Cada pessoa pode mandar até <strong>2 GIFs por música</strong>. O GIF
+          aparece na lateral do palco com o nome de quem enviou. A confirmação
+          de envio é um aviso discreto no topo do celular. O anfitrião pode
+          desativar reações ou GIFs.
         </p>
       </>
     ),
@@ -314,6 +318,11 @@ export function Tutorial() {
           <p>
             Como colocar a festa na TV e entrar pelo celular. Siga do começo ou
             pule direto para a parte em que você travou.
+          </p>
+          <p>
+            Prefere ver na prática? Dentro da sala, toque em{" "}
+            <strong>Tutorial</strong>, no topo da tela, e o mascote te guia
+            pelos botões.
           </p>
         </div>
         <div className="tutorial-layout">

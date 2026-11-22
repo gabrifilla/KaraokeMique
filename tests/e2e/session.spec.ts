@@ -1,4 +1,5 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
+import { checkHostTour } from "./helpers/tour";
 test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderação", async ({
   browser,
 }) => {
@@ -51,6 +52,7 @@ test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderaç
     const code = await host.locator("[data-room-code]").textContent();
     await expect(host.locator(".stage-shortcut")).toBeVisible();
     await expect(host.locator(".invite, .qr")).toHaveCount(0);
+    await checkHostTour(host);
     await host.getByRole("link", { name: "Palco", exact: true }).click();
     await host.getByLabel("Tocar fila automaticamente").click();
     await expect(

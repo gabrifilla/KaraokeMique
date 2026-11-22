@@ -195,6 +195,7 @@ export function StageSetup({
         código abaixo.
       </p>
       <form
+        data-tour="tv"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
