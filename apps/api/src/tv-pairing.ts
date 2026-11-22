@@ -28,7 +28,7 @@ export async function approveTvPairing(
     requireRule(
       actor.role === "member" && actor.id === room.hostId,
       "HOST_ONLY",
-      "Somente o anfitrião pode conectar uma TV.",
+      "Só o anfitrião pode ligar a TV.",
       403,
     );
     requireRule(room.state !== "CLOSED", "ROOM_CLOSED", "Sala encerrada.", 409);
@@ -39,13 +39,13 @@ export async function approveTvPairing(
     requireRule(
       result.rowCount,
       "TV_EXPIRED",
-      "Código de TV expirado ou inválido. Gere outro na TV.",
+      "Esse número da TV expirou ou está errado. Na TV, toque em Gerar outro código e tente de novo.",
       404,
     );
     requireRule(
       !result.rows[0].room_id || result.rows[0].room_id === roomId,
       "TV_USED",
-      "Esta TV já foi autorizada para outra sala.",
+      "Essa TV já está ligada em outra festa. Abra o site na TV de novo para gerar outro QR.",
       409,
     );
     await c.query("UPDATE tv_pairings SET room_id=$2 WHERE id=$1", [
@@ -66,7 +66,7 @@ export async function redeemTvPairing(
   requireRule(
     result.rowCount,
     "TV_EXPIRED",
-    "A conexão da TV expirou. Gere outro código.",
+    "O QR da TV expirou. Toque em Gerar outro código.",
     404,
   );
   const pairing = result.rows[0];
@@ -82,7 +82,7 @@ export async function redeemTvPairing(
     requireRule(
       locked.rowCount,
       "TV_USED",
-      "Esta conexão da TV já foi utilizada.",
+      "Esse QR já foi usado. Abra o site na TV de novo para gerar outro.",
       409,
     );
     await replaceStage(room, c, token);

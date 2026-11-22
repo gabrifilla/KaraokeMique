@@ -91,7 +91,7 @@ function limit(key: string, max: number, ms: number) {
   requireRule(
     b.n++ < max,
     "RATE_LIMIT",
-    "Aguarde antes de tentar novamente.",
+    "Muitas tentativas seguidas. Espere um minutinho e tente de novo.",
     429,
   );
 }
@@ -134,12 +134,12 @@ class Errors implements ExceptionFilter {
           e instanceof RuleError
             ? e.message
             : e instanceof ZodError
-              ? "Dados inválidos. Verifique os campos."
+              ? "Algum campo ficou incompleto. Confira e tente de novo."
               : status === 404
-                ? "Recurso não encontrado."
+                ? "Não encontramos o que você procurou. Volte ao início e tente de novo."
                 : status < 500
-                  ? "Requisição inválida."
-                  : "Serviço indisponível. Tente novamente.",
+                  ? "Algo deu errado. Atualize a página e tente de novo."
+                  : "O sistema está com instabilidade. Espere um pouco e tente de novo.",
         retryable: status === 503,
         requestId: id,
       },
@@ -199,7 +199,7 @@ class Api {
     requireRule(
       typeof device === "string",
       "UNAUTHORIZED",
-      "Gere o código nesta TV para conectar.",
+      "Abra o QR nesta própria TV para ligá-la.",
       401,
     );
     const result = await redeemTvPairing(store, id, device);
@@ -232,7 +232,12 @@ class Api {
     const r = await store.pool.query("SELECT data FROM rooms WHERE code=$1", [
       code,
     ]);
-    requireRule(r.rowCount, "NOT_FOUND", "Convite não encontrado.", 404);
+    requireRule(
+      r.rowCount,
+      "NOT_FOUND",
+      "Não encontramos essa sala. Confira o código ou leia o QR da TV de novo.",
+      404,
+    );
     const room = r.rows[0].data as Room;
     return {
       name: room.name,
@@ -274,7 +279,12 @@ class Api {
     const r = await store.pool.query("SELECT id FROM rooms WHERE code=$1", [
       b.code,
     ]);
-    requireRule(r.rowCount, "NOT_FOUND", "Convite não encontrado.", 404);
+    requireRule(
+      r.rowCount,
+      "NOT_FOUND",
+      "Não encontramos essa sala. Confira o código ou leia o QR da TV de novo.",
+      404,
+    );
     const id = r.rows[0].id;
     let existing: Actor | undefined;
     try {
@@ -299,13 +309,13 @@ class Api {
       requireRule(
         room.settings.entry,
         "ENTRY_CLOSED",
-        "O anfitrião fechou as entradas.",
+        "A sala não está aceitando novas pessoas agora. Peça para o anfitrião liberar a entrada.",
         403,
       );
       requireRule(
         room.people.filter((p) => p.status === "ACTIVE").length < 30,
         "ROOM_FULL",
-        "Sala cheia.",
+        "A sala está cheia.",
       );
       const person = {
         id: randomUUID(),
@@ -345,7 +355,7 @@ class Api {
     requireRule(
       a.role === "member",
       "FORBIDDEN",
-      "Somente participantes.",
+      "Entre na sala para fazer isso.",
       403,
     );
     limit(`search:${a.id}`, 6, 60000);
@@ -360,7 +370,7 @@ class Api {
     requireRule(
       actor.role === "member",
       "FORBIDDEN",
-      "Somente participantes.",
+      "Entre na sala para fazer isso.",
       403,
     );
     limit(`suggestions:${actor.id}`, 12, 60000);
@@ -396,7 +406,7 @@ class Api {
           requireRule(
             a.role === "member" && room.hostId === a.id,
             "HOST_ONLY",
-            "Apenas o anfitrião pode parear.",
+            "Só o anfitrião pode ligar a TV.",
             403,
           );
           requireRule(
@@ -434,7 +444,7 @@ class Api {
           requireRule(
             forecast(room, Date.now())[0]?.id === preparedId,
             "VERSION_CONFLICT",
-            "A fila mudou. Prepare novamente.",
+            "A fila mudou agora mesmo. Toque de novo para começar.",
             409,
           );
         const wasPlaying = room.state === "PLAYING";
@@ -501,7 +511,7 @@ class Api {
         requireRule(
           r.rowCount,
           "PAIR_EXPIRED",
-          "Código expirado ou já utilizado.",
+          "Esse código expirou ou já foi usado. Gere outro.",
           409,
         );
       }
@@ -572,7 +582,11 @@ io.use(async (socket, next) => {
     socket.data = { id, token, actor };
     next();
   } catch {
-    next(new Error("Sessão inválida. Entre novamente."));
+    next(
+      new Error(
+        "Seu acesso à sala expirou. Entre de novo pelo QR ou pelo código da sala.",
+      ),
+    );
   }
 });
 async function syncSocket(socket: any) {
@@ -637,7 +651,7 @@ io.on("connection", (socket) => {
       requireRule(
         a.role === "member" && r.state !== "CLOSED" && r.settings.reactions,
         "REACTIONS_OFF",
-        "Reações desativadas.",
+        "O anfitrião desligou as reações.",
         403,
       );
       const b = z
@@ -656,7 +670,11 @@ io.on("connection", (socket) => {
         b.type === "GIF" ? gifUsageFor(id, r.current?.id ?? "idle") : undefined;
       const gifsUsed = gifCounts?.get(a.id) ?? 0;
       if (b.type === "GIF") {
-        requireRule(r.settings.gifs, "GIFS_OFF", "GIFs desativados.");
+        requireRule(
+          r.settings.gifs,
+          "GIFS_OFF",
+          "O anfitrião desligou os GIFs.",
+        );
         requireRule(
           gifsUsed < GIFS_PER_SONG,
           "GIF_LIMIT",

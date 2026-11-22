@@ -29,7 +29,15 @@ export async function checkSuggestions(page: Page) {
     .first()
     .getByRole("button", { name: "Adicionar", exact: true })
     .click();
-  await page.getByRole("button", { name: "Confirmar", exact: true }).click();
+  // Um toque adiciona; "Desfazer" no aviso tira a música da fila.
+  await expect(page.getByText("entrou na fila!")).toBeVisible();
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  await expect(
+    page
+      .locator(".song")
+      .first()
+      .getByRole("button", { name: "Adicionar", exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".song").first()).toContainText(
     "Essa música já apareceu na sala.",
   );

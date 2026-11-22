@@ -63,7 +63,12 @@ export class Store {
   }
   async read(id: string) {
     const [row] = await this.db.select().from(rooms).where(eq(rooms.id, id));
-    requireRule(row, "NOT_FOUND", "Sala não encontrada.", 404);
+    requireRule(
+      row,
+      "NOT_FOUND",
+      "Não encontramos essa sala. Confira o código ou leia o QR da TV de novo.",
+      404,
+    );
     return row.data;
   }
   async receipt(token: string, id: string, body: string) {
@@ -89,7 +94,7 @@ export class Store {
     requireRule(
       r.rowCount,
       "UNAUTHORIZED",
-      "Sessão expirada. Entre novamente.",
+      "Seu acesso à sala expirou. Entre de novo pelo QR ou pelo código da sala.",
       401,
     );
     const actor = r.rows[0].actor as Actor;
@@ -132,7 +137,12 @@ export class Store {
         "SELECT data FROM rooms WHERE id=$1 FOR UPDATE",
         [id],
       );
-      requireRule(rows.rowCount, "NOT_FOUND", "Sala não encontrada.", 404);
+      requireRule(
+        rows.rowCount,
+        "NOT_FOUND",
+        "Não encontramos essa sala. Confira o código ou leia o QR da TV de novo.",
+        404,
+      );
       if (receipt) {
         const prior = await c.query(
           "SELECT * FROM command_receipts WHERE session_hash=$1 AND command_id=$2",

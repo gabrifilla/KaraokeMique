@@ -53,10 +53,10 @@ export function TvSetup() {
       <Brand />
       <section className="card">
         <p className="eyebrow">ESTA TELA VAI SER O PALCO</p>
-        <h1>Conecte pelo celular</h1>
+        <h1>Aponte a câmera do celular para o QR</h1>
         <p>
-          O anfitrião escaneia o QR e escolhe a sala. Não precisa digitar nada
-          na TV.
+          A sala é criada no celular e esta TV liga sozinha. Não precisa digitar
+          nada aqui.
         </p>
         {pairing && (
           <>
@@ -64,7 +64,8 @@ export function TvSetup() {
               <QRCodeSVG value={url} size={220} marginSize={3} />
             </div>
             <p>
-              Ou, na sala do celular, toque em <strong>Palco</strong> e informe:
+              Sem câmera? No celular, toque em <strong>Ligar a TV</strong> e
+              digite:
             </p>
             <strong className="tv-code">{pairing.code}</strong>
             <small>
@@ -87,26 +88,36 @@ export function ApproveTv() {
   const code = new URLSearchParams(location.search).get("code") || "";
   const [rooms, setRooms] = useState<any[]>([]),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
+  const createUrl = `/rooms/new?tv=${encodeURIComponent(code)}`;
   useEffect(() => {
     let cancelled = false;
     void api("/hosted-rooms")
       .then((r) => {
-        if (!cancelled) setRooms(r);
+        if (cancelled) return;
+        // Sem sala aberta neste celular: vai direto criar, e a TV liga sozinha.
+        if (!r.length) navigate(createUrl, { replace: true });
+        setRooms(r);
+        setLoaded(true);
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message);
+        if (!cancelled) {
+          setError(e.message);
+          setLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, []);
+  if (!loaded) return <main className="narrow" aria-busy="true" />;
   return (
     <main className="narrow">
       <section className="card">
-        <p className="eyebrow">AUTORIZAR A TV</p>
-        <h1>Qual sala vai para a TV?</h1>
+        <p className="eyebrow">LIGAR A TV</p>
+        <h1>Qual festa vai aparecer na TV?</h1>
         <p>
           Confirme se a TV mostra o código <strong>{code}</strong>.
         </p>
@@ -126,20 +137,11 @@ export function ApproveTv() {
               }
             }}
           >
-            Conectar à sala {room.name} · {room.code}
+            Mostrar {room.name} na TV
           </button>
         ))}
-        {!rooms.length && (
-          <p>
-            Abra este link no navegador em que você criou sua sala ou crie uma
-            sala agora.
-          </p>
-        )}
-        <Link
-          className="button secondary"
-          to={`/rooms/new?tv=${encodeURIComponent(code)}`}
-        >
-          Criar sala e conectar TV
+        <Link className="button secondary" to={createUrl}>
+          Criar uma festa nova
         </Link>
         {error && <p role="alert">{error}</p>}
       </section>
@@ -188,11 +190,11 @@ export function StageSetup({
       <button disabled={busy} onClick={() => void openHere()}>
         Usar esta tela como palco
       </button>
-      <h3>Conectar uma TV pelo celular</h3>
+      <h3>Ligar a TV</h3>
       <p>
-        Na TV, abra o início do Karaoke Míque e escolha{" "}
-        <strong>Usar como palco</strong>. Escaneie o QR da TV ou informe o
-        código abaixo.
+        Na TV, abra o site do Karaoke Míque e escolha{" "}
+        <strong>Usar como palco</strong>. Aponte a câmera do celular para o QR
+        que aparecer, ou digite abaixo o número mostrado na TV.
       </p>
       <form
         data-tour="tv"
@@ -211,7 +213,7 @@ export function StageSetup({
         }}
       >
         <label>
-          Código de 6 dígitos da TV
+          Número que aparece na TV
           <input
             inputMode="numeric"
             pattern="[0-9]{6}"
@@ -221,7 +223,7 @@ export function StageSetup({
             required
           />
         </label>
-        <button disabled={busy}>Conectar TV</button>
+        <button disabled={busy}>Ligar a TV</button>
       </form>
       <Link to="/stage/tv" target="_blank">
         Abrir modo TV em outra aba

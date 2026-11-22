@@ -114,7 +114,8 @@ export function tourSteps(role: TourRole, base: string): TourStep[] {
     body: (
       <p>
         Pra rever este tour quando quiser, toque no botão{" "}
-        <strong>Tutorial</strong> aqui em cima. Bora soltar a voz!
+        <strong>Tutorial</strong> aqui em cima. Letra pequena? Toque em{" "}
+        <strong>Aa</strong> para aumentar. Bora soltar a voz!
       </p>
     ),
   };
@@ -177,10 +178,13 @@ export function tourSteps(role: TourRole, base: string): TourStep[] {
             Na TV ou no computador, abra este mesmo site e escolha{" "}
             <strong>Usar como palco</strong>.
           </li>
-          <li>Escaneie o QR que aparecer na TV com este celular.</li>
           <li>
-            Ou digite aqui o código de 6 dígitos mostrado na TV e toque em{" "}
-            <strong>Conectar TV</strong>.
+            Aponte a câmera deste celular para o QR da TV. Pronto: ela liga
+            sozinha.
+          </li>
+          <li>
+            Sem câmera? Digite aqui o número da TV e toque em{" "}
+            <strong>Ligar a TV</strong>.
           </li>
         </ol>
       ),

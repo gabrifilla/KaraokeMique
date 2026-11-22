@@ -27,7 +27,12 @@ export async function resolvePairing(
       const result = await pool.query("SELECT id FROM rooms WHERE code=$1", [
         input.roomCode,
       ]);
-      requireRule(result.rowCount, "NOT_FOUND", "Sala não encontrada.", 404);
+      requireRule(
+        result.rowCount,
+        "NOT_FOUND",
+        "Não encontramos essa sala. Confira o código ou leia o QR da TV de novo.",
+        404,
+      );
       return { roomId: result.rows[0].id as string, codeHash: undefined };
     }
   }
@@ -41,7 +46,7 @@ export async function resolvePairing(
   requireRule(
     result.rowCount,
     "INVALID_PAIR",
-    "Código de palco inválido.",
+    "Código errado. Confira os números e tente de novo.",
     404,
   );
   return { roomId: result.rows[0].room_id as string, codeHash };

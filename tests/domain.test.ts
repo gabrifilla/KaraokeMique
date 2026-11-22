@@ -105,6 +105,7 @@ function run(
   kind: Command["kind"],
   payload: Record<string, unknown> = {},
   at = now,
+  settle = true,
 ) {
   apply(
     r,
@@ -117,6 +118,16 @@ function run(
       ? { ...video, id: (payload.videoId as string) || video.id }
       : undefined,
   );
+  // Todos votaram: a rodada fecha após a janela curta para trocar a nota.
+  const round = r.current?.round;
+  if (
+    settle &&
+    kind === "VOTE" &&
+    r.state === "VOTING" &&
+    round?.deadline !== undefined &&
+    round.eligible.every((id) => round.votes[id] !== undefined)
+  )
+    finishVoting(r, at, "ALL_VOTED");
 }
 function song(r: Room, who: string, id: string) {
   run(r, who, "ADD", { videoId: id });
@@ -199,18 +210,34 @@ describe("Votação e bis", () => {
     expect(r.state).toBe("RESULTS");
     expect(r.current!.round!.average).toBe(5);
   });
+  it("todos votaram: ainda dá para trocar a nota por 3s, sem contar duas vezes", () => {
+    const r = fixture();
+    voting(r);
+    run(r, "B", "VOTE", { score: 2 }, now, false);
+    run(r, "C", "VOTE", { score: 8 }, now + 1000, false);
+    expect(r.state).toBe("VOTING");
+    expect(r.current!.round!.deadline).toBe(now + 4000);
+    run(r, "B", "VOTE", { score: 10 }, now + 2000, false);
+    maintain(r, now + 3999);
+    expect(r.state).toBe("VOTING");
+    maintain(r, now + 4000);
+    expect(r.state).toBe("RESULTS");
+    expect(r.current!.round!.count).toBe(2);
+    expect(r.current!.round!.average).toBe(9);
+  });
   it.each([-1, 11, 8.5, "10", null])("recusa nota inválida %s", (score) => {
     const r = fixture();
     voting(r);
     expect(() => run(r, "B", "VOTE", { score })).toThrow("inteira");
   });
-  it("recusa autovoto, voto duplo, não membro e voto no deadline", () => {
+  it("recusa autovoto, não membro e voto no deadline; troca de nota conta uma vez", () => {
     const r = fixture();
     voting(r);
     expect(() => run(r, "A", "VOTE", { score: 10 })).toThrow("si");
     expect(() => run(r, "X", "VOTE", { score: 10 })).toThrow();
     run(r, "B", "VOTE", { score: 9 });
-    expect(() => run(r, "B", "VOTE", { score: 9 })).toThrow("registrado");
+    run(r, "B", "VOTE", { score: 4 });
+    expect(r.current!.round!.votes).toEqual({ B: 4 });
     expect(() => run(r, "C", "VOTE", { score: 9 }, now + 10000)).toThrow(
       "terminou",
     );
@@ -262,7 +289,12 @@ describe("Votação e bis", () => {
       },
       now + 20000,
     );
+    // Todos já votaram: fecha após a janela curta para trocar a nota.
+    expect(r.state).toBe("VOTING");
+    expect(r.current!.round!.deadline).toBe(now + 23000);
+    maintain(r, now + 23000);
     expect(r.state).toBe("RESULTS");
+    expect(r.current!.round!.reason).toBe("ALL_VOTED");
     expect(r.current!.round!.average).toBe(7);
   });
   it("votos antecipados se somam aos do pós-música", () => {
@@ -287,9 +319,8 @@ describe("Votação e bis", () => {
     );
     expect(r.state).toBe("VOTING");
     expect(r.current!.round!.deadline).toBe(now + 30000);
-    expect(() => run(r, "B", "VOTE", { score: 9 }, now + 21000)).toThrow(
-      "registrado",
-    );
+    run(r, "B", "VOTE", { score: 3 }, now + 21000);
+    run(r, "B", "VOTE", { score: 9 }, now + 22000);
     run(r, "C", "VOTE", { score: 7 }, now + 29999);
     expect(r.current!.round!.average).toBe(8);
   });
@@ -622,7 +653,7 @@ describe("Reprodução e autorização", () => {
         },
         now,
       ),
-    ).toThrow("substituído");
+    ).toThrow("trocada");
     expect(() =>
       run(r, "B", "REPORT", {
         performanceId: r.current!.id,
@@ -650,7 +681,7 @@ describe("Reprodução e autorização", () => {
   });
   it("nunca deixa anfitrião sair ou se remover", () => {
     const r = fixture();
-    expect(() => run(r, "A", "LEAVE")).toThrow("Transfira");
+    expect(() => run(r, "A", "LEAVE")).toThrow("transfira");
     expect(() => run(r, "A", "REMOVE_PERSON", { personId: "A" })).toThrow(
       "anfitrião",
     );

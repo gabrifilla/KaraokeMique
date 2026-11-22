@@ -10,32 +10,35 @@ test("TV autorizada pelo QR no celular e abertura direta com um toque", async ({
     const host = await hostContext.newPage(),
       phone = await hostContext.newPage(),
       tv = await tvContext.newPage();
-    await host.goto("/rooms/new");
-    await host.getByLabel("Como a galera te chama?").fill("Anfitrião TV");
-    await host.getByRole("button", { name: "Criar minha sala" }).click();
-    const roomCode = host.locator("[data-room-code]");
-    await expect(roomCode).toHaveText(/^[A-F0-9]{8}$/);
-    const roomUrl = host.url();
-    // Reutiliza a sala para respeitar o limite real de criação por IP na suíte.
-    await checkSuggestions(host);
+    // Fluxo novo: a TV mostra o QR, o celular cria a sala e a TV liga sozinha.
     await tv.goto("/");
     await tv
       .getByRole("link", { name: "Usar como palco", exact: true })
       .click();
     await expect(tv.locator(".tv-code")).toHaveText(/^\d{6}$/);
     const code = await tv.locator(".tv-code").textContent();
-    // Opening the QR destination preserves the host's browser identity.
-    await phone.goto(`/connect-tv?code=${code}`);
-    await phone
-      .getByRole("button", { name: /Conectar à sala/ })
-      .filter({ hasText: (await roomCode.textContent())! })
-      .click();
-    await expect(tv.locator(".qr svg")).toBeVisible();
+    await host.goto(`/connect-tv?code=${code}`);
+    await expect(host).toHaveURL(/\/rooms\/new\?tv=/);
+    await host.getByLabel("Como a galera te chama?").fill("Anfitrião TV");
+    await host.getByRole("button", { name: "Criar minha sala" }).click();
+    await expect(host.getByText("TV ligada!")).toBeVisible();
     await expect(tv.locator(".stage-main")).toBeVisible();
+    await expect(tv.locator(".qr svg")).toBeVisible();
+    const roomCode = host.locator("[data-room-code]");
+    await expect(roomCode).toHaveText(/^[A-F0-9]{8}$/);
+    const roomUrl = host.url();
+    // Reutiliza a sala para respeitar o limite real de criação por IP na suíte.
+    await checkSuggestions(host);
+    // Com sala aberta, o QR de outra TV oferece escolher a festa.
+    const tv2 = await tvContext.newPage();
+    await tv2.goto("/stage/tv");
+    await expect(tv2.locator(".tv-code")).toHaveText(/^\d{6}$/);
+    const code2 = await tv2.locator(".tv-code").textContent();
+    await phone.goto(`/connect-tv?code=${code2}`);
+    await phone.getByRole("button", { name: /Mostrar .* na TV/ }).click();
+    await expect(tv2.locator(".stage-main")).toBeVisible();
     await phone.getByRole("link", { name: "Palco", exact: true }).click();
-    await phone
-      .getByText("Conectar ou reconfigurar TV", { exact: true })
-      .click();
+    await phone.locator("summary", { hasText: "Ligar a TV" }).click();
     await phone
       .getByRole("button", { name: "Usar esta tela como palco", exact: true })
       .click();

@@ -49,7 +49,7 @@ async function api(endpoint: string, params: Record<string, string>) {
     if (e instanceof RuleError) throw e;
     throw new RuleError(
       "PROVIDER_UNAVAILABLE",
-      "Não foi possível consultar o YouTube.",
+      "O YouTube não respondeu agora. Tente de novo em instantes.",
       503,
     );
   }
@@ -128,7 +128,7 @@ export async function validateVideo(id: string) {
   requireRule(
     /^[a-zA-Z0-9_-]{11}$/.test(id),
     "INVALID_VIDEO",
-    "ID de vídeo inválido.",
+    "Não conseguimos usar esse vídeo. Escolha outro.",
     400,
   );
   const video =

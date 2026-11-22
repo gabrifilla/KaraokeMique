@@ -62,6 +62,44 @@ const stateNames: Record<string, string> = {
   CLOSED: "Foi bom demais!",
 };
 const avatars = ["🎤", "🌟", "🎸", "🪩", "🎧"];
+// Letras grandes: preferência de cada celular, aplicada antes de desenhar.
+const textSizeKey = "karaoke.textSize";
+function readLargeText() {
+  try {
+    return localStorage.getItem(textSizeKey) === "large";
+  } catch {
+    return false;
+  }
+}
+function applyLargeText(large: boolean) {
+  if (large) document.documentElement.dataset.textSize = "large";
+  else delete document.documentElement.dataset.textSize;
+}
+applyLargeText(readLargeText());
+function LargeTextToggle() {
+  const [large, setLarge] = useState(readLargeText);
+  return (
+    <button
+      type="button"
+      className="quiet text-size-toggle"
+      aria-pressed={large}
+      aria-label="Letras grandes"
+      title="Letras grandes"
+      onClick={() => {
+        const next = !large;
+        setLarge(next);
+        applyLargeText(next);
+        try {
+          localStorage.setItem(textSizeKey, next ? "large" : "normal");
+        } catch {
+          /* sem armazenamento: vale só nesta visita */
+        }
+      }}
+    >
+      <span aria-hidden="true">Aa</span>
+    </button>
+  );
+}
 function Confirm({
   label,
   onConfirm,
@@ -100,6 +138,7 @@ function Entrance() {
   const location = useLocation();
   const isNew = location.pathname === "/rooms/new";
   const isJoin = location.pathname.startsWith("/join");
+  const fromTv = isNew && new URLSearchParams(location.search).has("tv");
   const [code, setCode] = useState(inviteCode || "");
   const [nickname, setNickname] = useState("");
   const [name, setName] = useState("");
@@ -123,9 +162,17 @@ function Entrance() {
           : { code: code.toUpperCase(), nickname, avatar },
       );
       const tv = new URLSearchParams(location.search).get("tv");
-      navigate(
-        `/r/${r.roomId}${isNew && tv ? `/stage?tv=${encodeURIComponent(tv)}` : ""}`,
-      );
+      if (isNew && tv) {
+        // Veio do QR da TV: liga a TV sozinho, sem passo extra.
+        try {
+          await api(`/rooms/${r.roomId}/connect-tv`, { code: tv });
+          navigate(`/r/${r.roomId}?tv=ligada`);
+        } catch {
+          navigate(`/r/${r.roomId}/stage?tv=${encodeURIComponent(tv)}`);
+        }
+        return;
+      }
+      navigate(`/r/${r.roomId}`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -140,6 +187,7 @@ function Entrance() {
       <header className="landing-header">
         <Brand />
         <nav aria-label="Navegação inicial">
+          <LargeTextToggle />
           {!isNew && !isJoin && (
             <a className="header-how" href="#como-funciona">
               Como funciona
@@ -156,7 +204,9 @@ function Entrance() {
           <p className="hero-label">
             <Icon name="mic" />
             {isNew
-              ? "UMA SALA. TODO MUNDO JUNTO."
+              ? fromTv
+                ? "SÓ FALTA SEU NOME. A TV LIGA SOZINHA."
+                : "UMA SALA. TODO MUNDO JUNTO."
               : isJoin
                 ? "SEU LUGAR NA FESTA TÁ GUARDADO."
                 : "KARAOKÊ COM A SUA GALERA"}
@@ -467,6 +517,14 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [score, setScore] = useState<number>();
   const [feedback, setFeedback] = useState("");
+  const [undoSong, setUndoSong] = useState<string>();
+  useEffect(() => {
+    // Volta da criação da sala pelo QR da TV: confirma que ela ligou.
+    if (new URLSearchParams(location.search).get("tv") === "ligada") {
+      setFeedback("📺 TV ligada! A festa já aparece na tela grande.");
+      navigate(location.pathname, { replace: true });
+    }
+  }, []);
   const [reactionFeedback, setReactionFeedback] = useState<{
     message: string;
   }>();
@@ -477,7 +535,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   }, [reactionFeedback]);
   useEffect(() => {
     if (!feedback) return;
-    const timeout = setTimeout(() => setFeedback(""), 5000);
+    const timeout = setTimeout(() => {
+      setFeedback("");
+      setUndoSong(undefined);
+    }, 6000);
     return () => clearTimeout(timeout);
   }, [feedback]);
   const [q, setQ] = useState("");
@@ -555,7 +616,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     s.on("connect_error", () => {
       setOnline(false);
       setError(
-        "Não deu pra conectar. Pode ser que você não esteja mais na sala ou que ela tenha sido aberta em outro aparelho.",
+        "Não conseguimos abrir a sala neste celular. Confira a internet ou entre de novo pelo QR da TV.",
       );
     });
     s.on("room.state", applySnapshot);
@@ -659,7 +720,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     payload: Record<string, unknown> = {},
     silent = false,
   ) {
-    if (!online) throw new Error("Reconectando. Aguarde antes de enviar.");
+    if (!online)
+      throw new Error(
+        "Sem internet agora. Confira o Wi-Fi ou os dados móveis; reconectamos sozinhos.",
+      );
     if (!silent) setBusy(true);
     setError("");
     try {
@@ -669,8 +733,6 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         payload,
       });
       if (r.snapshot) applySnapshot(r.snapshot);
-      if (kind === "ADD")
-        setFeedback("Música adicionada! Acompanhe sua vez na fila.");
       if (kind === "REMOVE_SONG") setFeedback("Música removida da fila.");
       return r;
     } catch (e) {
@@ -682,6 +744,24 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   }
   const act = (kind: Command["kind"], payload: Record<string, unknown> = {}) =>
     void command(kind, payload).catch(() => {});
+  // Um toque adiciona; o aviso oferece "Desfazer" por alguns segundos.
+  async function addSong(videoId: string, title: string) {
+    try {
+      await command("ADD", { videoId });
+    } catch {
+      return;
+    }
+    const mine = (latest.current?.songs || [])
+      .filter(
+        (s) =>
+          s.video.id === videoId &&
+          s.personId === latest.current?.me.id &&
+          s.status === "WAITING",
+      )
+      .sort((a, b) => b.seq - a.seq)[0];
+    setFeedback(`✓ “${title}” entrou na fila!`);
+    setUndoSong(mine?.id);
+  }
   const host = room?.me.role === "member" && room?.hostId === room?.me.id;
   const tourRole = host ? "host" : "guest";
   const [tourOpen, setTourOpen] = useState(false);
@@ -693,6 +773,56 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     tourChecked.current = true;
     if (room!.state !== "CLOSED" && !tourSeen(tourRole)) setTourOpen(true);
   }, [stage, roomReady]);
+  // Avisos: vibra e mostra um aviso quando é a vez da pessoa, quando ela é a
+  // próxima e quando a votação abre, para ninguém precisar ficar vigiando.
+  const meId = room?.me.role === "member" ? room.me.id : undefined;
+  const singingNow =
+    !!meId &&
+    room?.current?.singerId === meId &&
+    ["PREPARING", "PLAYING", "PAUSED"].includes(room.state);
+  const nextUp =
+    !!meId &&
+    !singingNow &&
+    room?.queue[0]?.personId === meId &&
+    !!room.current;
+  const voteNow = !!room?.canVote && room.myVote === undefined;
+  const alertKind = stage
+    ? undefined
+    : singingNow
+      ? "turn"
+      : voteNow
+        ? "vote"
+        : nextUp
+          ? "next"
+          : undefined;
+  const alertKey = alertKind && `${alertKind}:${room?.current?.id}`;
+  const [dismissedAlert, setDismissedAlert] = useState<string>();
+  useEffect(() => {
+    if (!alertKey) return;
+    try {
+      navigator.vibrate?.(
+        alertKind === "turn" ? [400, 150, 400, 150, 400] : [200, 100, 200],
+      );
+    } catch {
+      /* sem vibração neste aparelho */
+    }
+    const original = document.title;
+    if (document.hidden)
+      document.title =
+        alertKind === "turn"
+          ? "🎤 É a sua vez!"
+          : alertKind === "vote"
+            ? "⭐ Hora de votar!"
+            : "⏭️ Você é o próximo!";
+    const restore = () => {
+      if (!document.hidden) document.title = original;
+    };
+    document.addEventListener("visibilitychange", restore);
+    return () => {
+      document.removeEventListener("visibilitychange", restore);
+      document.title = original;
+    };
+  }, [alertKey]);
   const inviteUrl = room ? `${locationOrigin()}/join/${room.code}` : "";
   async function music(more = false) {
     const term = more ? searchedQuery || q.trim() : q.trim();
@@ -811,32 +941,41 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         {round?.received} de {round?.eligibleCount} votos recebidos
       </p>
       {!stage &&
-        (room.myVote !== undefined ? (
-          <p role="status">✓ Voto {room.myVote} registrado</p>
-        ) : room.canVote ? (
+        (room.canVote ? (
           <>
             <div className="vote-grid">
-              {Array.from({ length: 11 }, (_, n) => (
-                <button
-                  key={n}
-                  data-score={n}
-                  aria-label={`Nota ${n}`}
-                  aria-pressed={score === n}
-                  className={score === n ? "selected" : "quiet"}
-                  disabled={!online || busy || votingClosed}
-                  onClick={() => setScore(n)}
-                >
-                  {n}
-                </button>
-              ))}
+              {Array.from({ length: 11 }, (_, n) => {
+                const chosen = (score ?? room.myVote) === n;
+                return (
+                  <button
+                    key={n}
+                    data-score={n}
+                    aria-label={`Nota ${n}`}
+                    aria-pressed={chosen}
+                    className={chosen ? "selected" : "quiet"}
+                    disabled={!online || votingClosed}
+                    onClick={() => {
+                      // Um toque já vota; tocar em outra nota troca o voto.
+                      setScore(n);
+                      void command("VOTE", { score: n }, true).then(
+                        () => setScore((s) => (s === n ? undefined : s)),
+                        () => setScore(undefined),
+                      );
+                    }}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
             </div>
-            <button
-              disabled={score === undefined || busy || !online || votingClosed}
-              onClick={() => act("VOTE", { score })}
-            >
-              Confirmar nota {score ?? ""}
-            </button>
+            <p role="status" className="vote-status">
+              {room.myVote !== undefined
+                ? `✓ Sua nota: ${room.myVote}. Mudou de ideia? É só tocar em outra.`
+                : "Toque na nota. Dá pra trocar enquanto a votação estiver aberta."}
+            </p>
           </>
+        ) : room.myVote !== undefined ? (
+          <p role="status">✓ Sua nota: {room.myVote}</p>
         ) : (
           <p>
             {room.current?.singerId === room.me.id
@@ -989,14 +1128,17 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           <span className="connection">
             {online ? "● Conectado" : "○ Reconectando…"}
           </span>
-          <button
-            type="button"
-            className="quiet tour-help"
-            data-tour="help"
-            onClick={() => setTourOpen(true)}
-          >
-            <span aria-hidden="true">?</span> Tutorial
-          </button>
+          <div className="header-tools">
+            <LargeTextToggle />
+            <button
+              type="button"
+              className="quiet tour-help"
+              data-tour="help"
+              onClick={() => setTourOpen(true)}
+            >
+              <span aria-hidden="true">?</span> Tutorial
+            </button>
+          </div>
         </header>
       )}
       {tourOpen && !stage && room.me.role === "member" && (
@@ -1023,12 +1165,48 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           {error}
         </p>
       )}
+      {alertKey && alertKind !== "vote" && dismissedAlert !== alertKey && (
+        <div
+          className="turn-alert"
+          data-kind={alertKind}
+          role="alert"
+          aria-live="assertive"
+        >
+          <strong>
+            {alertKind === "turn"
+              ? "🎤 É a sua vez! Pegue o microfone."
+              : "⏭️ Você é o próximo! Fique perto do microfone."}
+          </strong>
+          <button
+            className="quiet"
+            onClick={() => setDismissedAlert(alertKey)}
+            aria-label="Fechar aviso"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {!stage && feedback && (
         <div className="feedback" role="status">
           {feedback}
+          {undoSong && (
+            <button
+              className="quiet feedback-undo"
+              onClick={() => {
+                const songId = undoSong;
+                setUndoSong(undefined);
+                act("REMOVE_SONG", { songId });
+              }}
+            >
+              Desfazer
+            </button>
+          )}
           <button
             className="quiet"
-            onClick={() => setFeedback("")}
+            onClick={() => {
+              setFeedback("");
+              setUndoSong(undefined);
+            }}
             aria-label="Fechar confirmação"
           >
             ×
@@ -1143,12 +1321,12 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                       <p className="eyebrow">PALCO E TV</p>
                       <h2>Coloque a festa na tela grande</h2>
                       <p>
-                        Conecte a TV pelo celular ou transforme esta tela em
-                        palco.
+                        Abra o site na TV, escolha Usar como palco e aponte a
+                        câmera do celular para o QR.
                       </p>
                     </div>
                     <Link className="button" to={`/r/${id}/stage`}>
-                      Conectar TV ou abrir palco
+                      Ligar a TV
                     </Link>
                   </section>
                 )}
@@ -1390,13 +1568,24 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                           <small>Essa música já apareceu na sala.</small>
                         )}
                       </div>
-                      <Confirm
-                        label="Adicionar"
-                        onConfirm={() => act("ADD", { videoId: v.id })}
-                      >
-                        Adicionar “{v.title}” para você cantar? Confira título e
-                        canal antes de escolher.
-                      </Confirm>
+                      {room.songs.some(
+                        (s) =>
+                          s.video.id === v.id &&
+                          s.personId === room.me.id &&
+                          s.status === "WAITING",
+                      ) ? (
+                        <button className="quiet" disabled>
+                          Na fila ✓
+                        </button>
+                      ) : (
+                        <button
+                          className="quiet"
+                          disabled={busy || !online}
+                          onClick={() => void addSong(v.id, v.title)}
+                        >
+                          Adicionar
+                        </button>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -1511,7 +1700,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                   className="card stage-pairing"
                   open={room.epoch === 0 || tourOpen}
                 >
-                  <summary>Conectar ou reconfigurar TV</summary>
+                  <summary>Ligar a TV</summary>
                   <StageSetup
                     id={id}
                     roomCode={room.code}
@@ -1599,7 +1788,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                       </label>
                     ))}
                     <Link className="button secondary" to={`/r/${id}/stage`}>
-                      Conectar TV ou abrir palco
+                      Ligar a TV
                     </Link>
                     <Link to={`/r/${id}/queue`}>Gerenciar músicas da sala</Link>
                     <Confirm

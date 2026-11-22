@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type {
+  Round,
   Room,
   Song,
   Actor,
@@ -131,7 +132,7 @@ export function authorize(room: Room, actor: Actor) {
     requireRule(
       actor.epoch === room.epoch,
       "STALE_PLAYBACK_EPOCH",
-      "Este palco foi substituído.",
+      "Esta TV foi trocada por outra. Use a TV mais recente ou ligue esta de novo.",
       403,
     );
   else member(room, actor);
@@ -148,6 +149,18 @@ export function eligibleSong(room: Room, id: string, now: number) {
 // depois do fim do vídeo.
 export const VOTE_EARLY_MS = 20000;
 export const VOTE_AFTER_MS = 10000;
+// Quando todos já votaram, ainda dá alguns segundos para trocar a nota.
+export const ALL_VOTED_GRACE_MS = 3000;
+function allVoted(r: Round) {
+  return r.eligible.every((id) => r.votes[id] !== undefined);
+}
+function closeWhenAllVoted(room: Room, now: number) {
+  const r = room.current?.round;
+  if (!r || room.state !== "VOTING" || r.closedAt !== undefined) return;
+  if (!r.eligible.length) return finishVoting(room, now, "ALL_VOTED");
+  if (allVoted(r))
+    r.deadline = Math.min(r.deadline ?? Infinity, now + ALL_VOTED_GRACE_MS);
+}
 const EARLY_VOTING_STATES = ["PLAYING", "PAUSED"];
 export function votingOpen(room: Room, now: number) {
   const r = room.current?.round;
@@ -165,8 +178,7 @@ function connectedVoters(room: Room, singerId: string, now: number) {
 }
 export function canVote(room: Room, personId: string, now: number) {
   const r = room.current?.round;
-  if (!r || !votingOpen(room, now) || r.votes[personId] !== undefined)
-    return false;
+  if (!r || !votingOpen(room, now)) return false;
   if (r.eligible.includes(personId)) return true;
   // Na reta final, quem desbloqueia o celular depois da abertura também vota.
   const person = room.people.find((p) => p.id === personId);
@@ -224,7 +236,11 @@ export function maintain(room: Room, now: number) {
     room.current?.round?.deadline !== undefined &&
     now >= room.current.round.deadline
   )
-    finishVoting(room, now);
+    finishVoting(
+      room,
+      now,
+      allVoted(room.current.round) ? "ALL_VOTED" : "DEADLINE",
+    );
   if (
     room.offer &&
     ["OFFERED", "ACCEPTED"].includes(room.offer.state) &&
@@ -346,7 +362,11 @@ export function apply(
   }
   switch (cmd.kind) {
     case "ADD": {
-      requireRule(me && video, "VIDEO_UNAVAILABLE", "Vídeo não validado.");
+      requireRule(
+        me && video,
+        "VIDEO_UNAVAILABLE",
+        "Não conseguimos usar esse vídeo. Escolha outra versão da música.",
+      );
       requireRule(
         room.songs.filter(
           (s) =>
@@ -410,7 +430,7 @@ export function apply(
       requireRule(
         room.epoch > 0 && now - room.stageSeen < 15000,
         "STAGE_OFFLINE",
-        "Conecte o palco antes de preparar.",
+        "Ligue a TV antes de começar: toque em Ligar a TV.",
       );
       const s = forecast(room, now)[0];
       requireRule(s, "QUEUE_EMPTY", "Não tem música pronta pra tocar na fila.");
@@ -446,7 +466,7 @@ export function apply(
       requireRule(
         now - room.stageSeen < 15000,
         "STAGE_OFFLINE",
-        "Palco desconectado.",
+        "A TV está desligada ou sem internet. Abra o site nela de novo.",
       );
       if (room.state === "RECOVERY") {
         room.state = room.current?.turnApplied ? "PAUSED" : "PREPARING";
@@ -482,7 +502,7 @@ export function apply(
       requireRule(
         p && p.id === string("performanceId") && actor.epoch === p.epoch,
         "STALE_PLAYBACK_EPOCH",
-        "Apresentação ou palco antigo.",
+        "Esta TV foi trocada por outra. Use a TV mais recente ou ligue esta de novo.",
         409,
       );
       requireRule(
@@ -534,8 +554,7 @@ export function apply(
           openedAt: early?.openedAt ?? now,
           deadline: now + VOTE_AFTER_MS,
         };
-        if (p.round.eligible.every((id) => p.round!.votes[id] !== undefined))
-          finishVoting(room, now, "ALL_VOTED");
+        closeWhenAllVoted(room, now);
       }
       break;
     }
@@ -556,9 +575,9 @@ export function apply(
         "Você não pode votar em si.",
       );
       requireRule(
-        canVote(room, me.id, now) || r.votes[me.id] !== undefined,
+        canVote(room, me.id, now),
         "NOT_ELIGIBLE",
-        "Você não participa desta votação.",
+        "Você não participa desta rodada porque entrou depois que ela começou. Vote na próxima música!",
         403,
       );
       requireRule(
@@ -568,19 +587,10 @@ export function apply(
         "INVALID_SCORE",
         "Escolha uma nota inteira de 0 a 10.",
       );
-      requireRule(
-        r.votes[me.id] === undefined,
-        "ALREADY_VOTED",
-        "Seu voto já foi registrado.",
-        409,
-      );
       if (!r.eligible.includes(me.id)) r.eligible.push(me.id);
+      // Votar de novo troca a nota: cada pessoa conta uma vez só.
       r.votes[me.id] = payload.score as number;
-      if (
-        room.state === "VOTING" &&
-        r.eligible.every((id) => r.votes[id] !== undefined)
-      )
-        finishVoting(room, now, "ALL_VOTED");
+      closeWhenAllVoted(room, now);
       break;
     }
     case "ENCORE": {
@@ -606,7 +616,7 @@ export function apply(
         requireRule(
           room.offer.state === (payload.accept ? "ACCEPTED" : "DECLINED"),
           "OFFER_EXPIRED",
-          "A oferta já foi decidida.",
+          "Esse bis já foi decidido.",
         );
       break;
     }
@@ -616,7 +626,7 @@ export function apply(
       requireRule(
         target && active(target, now) && now - target.lastSeen < 15000,
         "PERSON_OFFLINE",
-        "Escolha um participante conectado.",
+        "Essa pessoa está com o celular desconectado. Escolha alguém que esteja com a sala aberta.",
       );
       room.hostId = target.id;
       break;
@@ -636,11 +646,7 @@ export function apply(
       if (r && r.closedAt === undefined) {
         r.eligible = r.eligible.filter((id) => id !== target.id);
         delete r.votes[target.id];
-        if (
-          room.state === "VOTING" &&
-          r.eligible.every((id) => r.votes[id] !== undefined)
-        )
-          finishVoting(room, now, "ALL_VOTED");
+        closeWhenAllVoted(room, now);
       }
       break;
     }
@@ -679,7 +685,7 @@ export function apply(
       requireRule(
         me && me.id !== room.hostId,
         "HOST_MUST_TRANSFER",
-        "Transfira o comando ou encerre a sala.",
+        "Antes de sair, transfira o comando da sala para outra pessoa em Gerenciar, ou encerre a sala.",
       );
       me.status = "LEFT";
       if (room.state === "PREPARING" && room.current?.singerId === me.id)
@@ -693,7 +699,11 @@ export function apply(
       if (room.offer) room.offer.state = "EXPIRED";
       break;
     default:
-      throw new RuleError("INVALID_COMMAND", "Comando inválido.", 400);
+      throw new RuleError(
+        "INVALID_COMMAND",
+        "Algo deu errado. Atualize a página e tente de novo.",
+        400,
+      );
   }
   maintain(room, now);
   if (

@@ -34,7 +34,7 @@ test("resultado sem votos usa mascote confuso; movimento reduzido revela direto"
       .first()
       .getByRole("button", { name: "Adicionar", exact: true })
       .click();
-    await host.getByRole("button", { name: "Confirmar", exact: true }).click();
+    await expect(host.getByText("entrou na fila!")).toBeVisible();
     await host.goto(roomUrl);
     await expect(stage.locator('[data-state="PLAYING"]')).toBeVisible();
     await stage

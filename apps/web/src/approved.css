@@ -1202,3 +1202,53 @@ h2 {
     transition: none;
   }
 }
+.feedback .feedback-undo {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.turn-alert {
+  position: sticky;
+  top: 8px;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 8px;
+  padding: 12px 14px 12px 18px;
+  border-radius: 14px;
+  background: var(--yellow);
+  color: var(--paper-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  animation: turn-alert-pulse 1.6s ease-in-out infinite;
+}
+.turn-alert[data-kind="turn"] {
+  background: var(--pink);
+}
+.turn-alert strong {
+  flex: 1;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+.turn-alert button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+}
+@keyframes turn-alert-pulse {
+  50% {
+    transform: scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .turn-alert {
+    animation: none;
+  }
+}

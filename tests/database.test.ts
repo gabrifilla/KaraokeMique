@@ -131,7 +131,7 @@ it("TV exige autorização do anfitrião e posse do segredo do dispositivo; subs
       { id: r.hostId, role: "member" },
       expired.code,
     ),
-  ).rejects.toThrow("expirado");
+  ).rejects.toThrow("expirou");
 });
 it("pareamento dev aceita código livre somente para a sala explicitamente informada", async () => {
   const { r } = await setup();
@@ -170,7 +170,7 @@ it("produção, teste e ambiente ausente nunca aceitam o atalho de desenvolvimen
         { code: "X".repeat(24), roomCode: r.code },
         environment,
       ),
-    ).rejects.toThrow("Código de palco inválido");
+    ).rejects.toThrow("Código errado");
   }
 });
 it("sem sala explícita, desenvolvimento também exige um código de pareamento existente", async () => {
@@ -179,7 +179,7 @@ it("sem sala explícita, desenvolvimento também exige um código de pareamento 
   ).rejects.toThrow();
   await expect(
     resolvePairing(store.pool, { code: "X".repeat(24) }, "development"),
-  ).rejects.toThrow("Código de palco inválido");
+  ).rejects.toThrow("Código errado");
 });
 it("PostgreSQL real serializa comandos concorrentes e recupera recibo/outbox", async () => {
   const { r, token } = await setup();
@@ -248,7 +248,7 @@ it("duas preparações não criam apresentações concorrentes", async () => {
     (await store.read(r.id)).songs.filter((s) => s.status === "RESERVED"),
   ).toHaveLength(1);
 });
-it("votos concorrentes únicos e reinício preserva prazo original", async () => {
+it("votos concorrentes contam uma vez e reinício preserva prazo original", async () => {
   const { r } = await setup();
   const ids = [randomUUID(), randomUUID()];
   const deadline = Date.now() + 1000;
@@ -303,7 +303,8 @@ it("votos concorrentes únicos e reinício preserva prazo original", async () =>
       return {};
     });
   const results = await Promise.allSettled([attempt(), attempt()]);
-  expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+  // Voto repetido troca a nota: os dois são aceitos, mas contam uma vez só.
+  expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(2);
   const restarted = new Store(testUrl);
   await restarted.mutate(r.id, (room) => {
     maintain(room, deadline);
@@ -318,7 +319,7 @@ it("votos concorrentes únicos e reinício preserva prazo original", async () =>
 it("sessão de outra sala não passa e rollback não publica", async () => {
   const a = await setup(),
     b = await setup();
-  await expect(store.session(a.token, b.r.id)).rejects.toThrow("expirada");
+  await expect(store.session(a.token, b.r.id)).rejects.toThrow("expirou");
   const before = (await store.read(a.r.id)).version;
   await expect(
     store.mutate(a.r.id, (room) => {

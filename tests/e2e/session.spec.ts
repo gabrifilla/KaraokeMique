@@ -80,11 +80,9 @@ test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderaç
     ).toBeInViewport({ ratio: 1 });
     await stage.screenshot({ path: "docs/screenshots/tv-connect.png" });
     await host
-      .getByLabel("Código de 6 dígitos da TV")
+      .getByLabel("Número que aparece na TV")
       .fill((await tvCode.textContent())!);
-    await host
-      .getByRole("button", { name: "Conectar TV", exact: true })
-      .click();
+    await host.getByRole("button", { name: "Ligar a TV", exact: true }).click();
     await qrInViewport();
     await expect(stage.locator(".stage-main")).toBeVisible();
     await expect(
@@ -102,10 +100,12 @@ test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderaç
         .nth(index)
         .getByRole("button", { name: "Adicionar" })
         .click();
-      await page
-        .getByRole("button", { name: "Confirmar", exact: true })
-        .click();
-      await expect(page.getByRole("alertdialog")).toHaveCount(0);
+      await expect(
+        page
+          .locator(".song")
+          .nth(index)
+          .getByRole("button", { name: "Na fila ✓" }),
+      ).toBeVisible();
     }
     await add(host, 0);
     await add(host, 1);
@@ -314,9 +314,12 @@ test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderaç
     ).toBeVisible();
     await b.screenshot({ path: "docs/screenshots/vote.png", fullPage: true });
     await qrInViewport();
+    // Um toque vota; tocar em outra nota troca sem contar duas vezes.
+    await b.getByRole("button", { name: "Nota 5", exact: true }).click();
+    await expect(b.getByText("Sua nota: 5.")).toBeVisible();
     for (const page of [b, c]) {
       await page.getByRole("button", { name: "Nota 10", exact: true }).click();
-      await page.getByRole("button", { name: "Confirmar nota 10" }).click();
+      await expect(page.getByText("Sua nota: 10.")).toBeVisible();
     }
     await expect(
       stage.locator('.score-result[data-phase="revealing"]'),
