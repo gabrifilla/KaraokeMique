@@ -1366,7 +1366,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         )}
       {!stage && feedback && (
         <div className="feedback" role="status">
-          {feedback}
+          <span className="feedback-text">{feedback}</span>
           {undoSong && (
             <button
               className="quiet feedback-undo"

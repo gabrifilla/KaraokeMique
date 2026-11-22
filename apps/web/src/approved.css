@@ -1202,7 +1202,15 @@ h2 {
     transition: none;
   }
 }
+.feedback .feedback-text {
+  flex: 1;
+  min-width: 0;
+}
 .feedback .feedback-undo {
+  flex: none;
+  width: auto;
+  min-height: 32px;
+  line-height: 1;
   padding: 6px 12px;
   border: 1px solid currentColor;
   border-radius: 999px;
