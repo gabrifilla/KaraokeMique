@@ -33,6 +33,7 @@ import { Icon } from "./Icons";
 import { PartyPreview } from "./PartyPreview";
 import { Tutorial } from "./Tutorial";
 import { GuidedTour, tourSeen, tourSteps } from "./GuidedTour";
+import { alertFeedback } from "./haptics";
 import {
   enablePush,
   pushStatus,
@@ -817,13 +818,8 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const [dismissedAlert, setDismissedAlert] = useState<string>();
   useEffect(() => {
     if (!alertKey) return;
-    try {
-      navigator.vibrate?.(
-        alertKind === "turn" ? [400, 150, 400, 150, 400] : [200, 100, 200],
-      );
-    } catch {
-      /* sem vibração neste aparelho */
-    }
+    // Vibra no Android; no iPhone usa o toque tátil do Safari e um som curto.
+    if (alertKind) alertFeedback(alertKind);
     const original = document.title;
     if (document.hidden)
       document.title =

@@ -125,8 +125,8 @@ export function tourSteps(
     title: "Pode bloquear o celular 🔒",
     body: (
       <p>
-        Sua música não sai da fila. Quando estiver chegando sua vez, eu faço o
-        celular vibrar. E se tocar em{" "}
+        Sua música não sai da fila. Com o app aberto, quando estiver chegando
+        sua vez eu vibro e toco um “ding”. E se tocar em{" "}
         <strong>🔔 Me avise quando for minha vez</strong>, eu te chamo até com a
         tela bloqueada!
       </p>

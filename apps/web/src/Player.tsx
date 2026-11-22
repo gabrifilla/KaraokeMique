@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import type { Snapshot } from "../../../packages/contracts/src/index.js";
 import { youtubeErrorMessage } from "./youtube-errors";
+import { isAppleTouch, onPlayerState } from "./player-state";
 let youtubePromise: Promise<void> | undefined;
 function loadYoutube() {
   return (youtubePromise ??= new Promise((resolve, reject) => {
@@ -49,15 +50,27 @@ export function Player({
   latest.current = room;
   const reportRef = useRef(report);
   reportRef.current = report;
+  const connectedRef = useRef(connected);
+  connectedRef.current = !!socket?.connected;
   const seq = useRef(0);
   const reports = useRef(Promise.resolve());
   const wantsPlayback = useRef(false);
   const playerReady = useRef(false);
+  const playRequestedAt = useRef(0);
+  const pauseRequestedAt = useRef(0);
+  /** Vídeo da apresentação atual: eventos de outro vídeo são ignorados. */
+  const videoRef = useRef<string | undefined>(undefined);
+  const videoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const [ready, setReady] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [notice, setNotice] = useState("");
   const perfId = room.current?.id;
+  const videoId = room.songs.find((s) => s.id === room.current?.songId)?.video
+    .id;
   const demo = room.integrationMode === "demo";
+  const apple = isAppleTouch();
   const send = (event: string) => {
     const id = latest.current.current?.id;
     if (id) {
@@ -67,14 +80,25 @@ export function Player({
         .catch((e) => setNotice(e.message));
     }
   };
+  const blockedNotice = () =>
+    setNotice(
+      apple
+        ? "O iPhone/iPad só libera o som com um toque: toque no botão ▶ do próprio vídeo. Depois disso, as próximas músicas começam sozinhas."
+        : "O navegador bloqueou o início com som. Toque em “Ativar som e iniciar” nesta tela para liberar a reprodução.",
+    );
+  const requestPlay = () => {
+    playRequestedAt.current = Date.now();
+    player.current?.playVideo();
+  };
+  const requestPause = () => {
+    pauseRequestedAt.current = Date.now();
+    player.current?.pauseVideo();
+  };
+
+  // Um único player do YouTube para a noite toda. No iPhone, o som liberado pelo
+  // primeiro toque vale para o mesmo player; recriar a cada música exigiria um
+  // toque novo em todas elas.
   useEffect(() => {
-    seq.current = room.current?.lastReport || 0;
-    wantsPlayback.current = ["PREPARING", "PLAYING"].includes(room.state);
-    playerReady.current = false;
-    setReady(false);
-    setAutoplayBlocked(false);
-    setNotice("");
-    if (!perfId) return;
     if (demo) {
       playerReady.current = true;
       setReady(true);
@@ -82,7 +106,6 @@ export function Player({
     }
     let cancelled = false;
     let instance: any;
-    let readyTimer: ReturnType<typeof setTimeout> | undefined;
     void loadYoutube()
       .then(() => {
         if (cancelled || !el.current) return;
@@ -91,19 +114,15 @@ export function Player({
         instance = new (window as any).YT.Player(target, {
           width: "100%",
           height: "100%",
-          videoId: room.songs.find((s) => s.id === room.current?.songId)?.video
-            .id,
           playerVars: {
             origin: location.origin,
             playsinline: 1,
             fs: 0,
             rel: 0,
-            // Explicit play on readiness also handles commands arriving while loading.
             autoplay: 0,
           },
           events: {
             onReady: () => {
-              clearTimeout(readyTimer);
               if (cancelled) return;
               playerReady.current = true;
               setReady(true);
@@ -111,27 +130,38 @@ export function Player({
             onAutoplayBlocked: () => {
               if (cancelled) return;
               setAutoplayBlocked(true);
-              setNotice(
-                "O navegador bloqueou o início com som. Toque em “Ativar som e iniciar” nesta tela para liberar a reprodução.",
-              );
+              blockedNotice();
             },
             onStateChange: (e: any) => {
               if (cancelled) return;
-              if (e.data === 1) {
-                if (!socket?.connected || !wantsPlayback.current) {
-                  instance.pauseVideo();
-                  return;
+              const playing = e.target?.getVideoData?.()?.video_id;
+              if (playing && videoRef.current && playing !== videoRef.current)
+                return;
+              if ([1, 2, 3, 5].includes(e.data))
+                clearTimeout(videoTimer.current);
+              const action = onPlayerState(e.data, {
+                roomState: latest.current.state,
+                connected: connectedRef.current,
+                now: Date.now(),
+                playRequestedAt: playRequestedAt.current,
+                pauseRequestedAt: pauseRequestedAt.current,
+              });
+              if (action.kind === "pause") requestPause();
+              else if (action.kind === "blocked") {
+                setAutoplayBlocked(true);
+                blockedNotice();
+              } else if (action.kind === "report") {
+                if (action.event === "PLAYING") {
+                  wantsPlayback.current = true;
+                  setAutoplayBlocked(false);
+                  setNotice("");
                 }
-                setAutoplayBlocked(false);
-                setNotice("");
-                send("PLAYING");
+                send(action.event);
               }
-              if (e.data === 2) send("PAUSED");
-              if (e.data === 0) send("ENDED");
             },
             onError: (event: { data: number }) => {
               if (cancelled) return;
-              clearTimeout(readyTimer);
+              clearTimeout(videoTimer.current);
               wantsPlayback.current = false;
               setAutoplayBlocked(false);
               setNotice(youtubeErrorMessage(event.data, location.hostname));
@@ -140,14 +170,6 @@ export function Player({
           },
         });
         player.current = instance;
-        readyTimer = setTimeout(() => {
-          if (!cancelled) {
-            setNotice(
-              "O vídeo não ficou pronto. O anfitrião pode cancelar por falha e tentar outro.",
-            );
-            send("ERROR");
-          }
-        }, 15000);
       })
       .catch((e) => {
         if (!cancelled) {
@@ -157,12 +179,46 @@ export function Player({
       });
     return () => {
       cancelled = true;
-      clearTimeout(readyTimer);
+      clearTimeout(videoTimer.current);
       instance?.destroy();
       player.current = null;
       playerReady.current = false;
+      setReady(false);
     };
-  }, [perfId, demo]);
+  }, [demo]);
+
+  // Nova apresentação: troca o vídeo no mesmo player.
+  useEffect(() => {
+    seq.current = room.current?.lastReport || 0;
+    wantsPlayback.current = ["PREPARING", "PLAYING"].includes(room.state);
+    setAutoplayBlocked(false);
+    setNotice("");
+    if (!perfId || demo || !ready || !videoId) return;
+    videoRef.current = videoId;
+    if (wantsPlayback.current) {
+      playRequestedAt.current = Date.now();
+      player.current?.loadVideoById(videoId);
+    } else player.current?.cueVideoById(videoId);
+    clearTimeout(videoTimer.current);
+    videoTimer.current = setTimeout(() => {
+      setNotice(
+        "O vídeo não ficou pronto. O anfitrião pode cancelar por falha e tentar outro.",
+      );
+      send("ERROR");
+    }, 15000);
+    // Se o play pedido não engrenar (bloqueio silencioso do Safari), pede toque.
+    const watchdog = setTimeout(() => {
+      if (
+        wantsPlayback.current &&
+        player.current?.getPlayerState?.() !== 1 &&
+        ["PREPARING", "PLAYING"].includes(latest.current.state)
+      ) {
+        setAutoplayBlocked(true);
+        blockedNotice();
+      }
+    }, 5000);
+    return () => clearTimeout(watchdog);
+  }, [perfId, demo, ready]);
   useEffect(() => {
     if (!demo || !perfId || room.state !== "PREPARING" || !connected) return;
     const start = () => {
@@ -180,7 +236,7 @@ export function Player({
       wantsPlayback.current &&
       ["PREPARING", "PLAYING"].includes(latest.current.state)
     )
-      player.current?.playVideo();
+      requestPlay();
   }, [perfId, demo, ready, connected]);
   useEffect(() => {
     const command = (c: any) => {
@@ -193,12 +249,12 @@ export function Player({
       if (demo) {
         if (c.action === "PAUSE") send("PAUSED");
         else send("PLAYING");
-      } else if (c.action === "PAUSE") player.current?.pauseVideo();
-      else if (playerReady.current) player.current?.playVideo();
+      } else if (c.action === "PAUSE") requestPause();
+      else if (playerReady.current) requestPlay();
     };
     const disconnected = () => {
       wantsPlayback.current = false;
-      player.current?.pauseVideo();
+      requestPause();
     };
     socket?.on("playback.command", command);
     socket?.on("disconnect", disconnected);
@@ -230,53 +286,54 @@ export function Player({
       ["PAUSED", "RECOVERY", "VOTING", "RESULTS", "CLOSED"].includes(room.state)
     ) {
       wantsPlayback.current = false;
-      player.current?.pauseVideo();
+      requestPause();
     }
   }, [room.state]);
   return (
     <section className="player-area" aria-label="Reprodução do palco">
-      {perfId ? (
-        <>
-          <div className="player-frame" ref={el}>
-            {demo && (
-              <div className="demo-player">
-                <span>🎤</span>
-                <h2>Player de demonstração</h2>
-                <p>Nenhum vídeo ou áudio real. Simule os eventos abaixo.</p>
-              </div>
-            )}
+      {/* O quadro do player fica sempre montado para não perder o som liberado. */}
+      <div
+        className="player-frame"
+        ref={el}
+        style={perfId ? undefined : { display: "none" }}
+      >
+        {demo && perfId && (
+          <div className="demo-player">
+            <span>🎤</span>
+            <h2>Player de demonstração</h2>
+            <p>Nenhum vídeo ou áudio real. Simule os eventos abaixo.</p>
           </div>
-          <div className="player-actions">
-            {autoplayBlocked &&
-              ["PREPARING", "PLAYING", "PAUSED"].includes(room.state) && (
-                <button
-                  disabled={!demo && !ready}
-                  onClick={() => {
-                    wantsPlayback.current = true;
-                    demo ? send("PLAYING") : player.current?.playVideo();
-                  }}
-                >
-                  {autoplayBlocked
-                    ? "▶ Ativar som e iniciar"
-                    : "▶ Tocar no palco"}
-                </button>
-              )}
-            {demo && room.state === "PLAYING" && !finaleOpen && (
-              <button className="quiet" onClick={() => send("FINALE")}>
-                Simular reta final
+        )}
+      </div>
+      {perfId ? (
+        <div className="player-actions">
+          {autoplayBlocked &&
+            ["PREPARING", "PLAYING", "PAUSED"].includes(room.state) &&
+            !apple && (
+              <button
+                disabled={!demo && !ready}
+                onClick={() => {
+                  wantsPlayback.current = true;
+                  demo ? send("PLAYING") : requestPlay();
+                }}
+              >
+                ▶ Ativar som e iniciar
               </button>
             )}
-            {demo && room.state === "PLAYING" && (
-              <button onClick={() => send("ENDED")}>Simular término</button>
-            )}
-            {demo &&
-              ["PREPARING", "PLAYING", "PAUSED"].includes(room.state) && (
-                <button className="quiet" onClick={() => send("ERROR")}>
-                  Simular falha
-                </button>
-              )}
-          </div>
-        </>
+          {demo && room.state === "PLAYING" && !finaleOpen && (
+            <button className="quiet" onClick={() => send("FINALE")}>
+              Simular reta final
+            </button>
+          )}
+          {demo && room.state === "PLAYING" && (
+            <button onClick={() => send("ENDED")}>Simular término</button>
+          )}
+          {demo && ["PREPARING", "PLAYING", "PAUSED"].includes(room.state) && (
+            <button className="quiet" onClick={() => send("ERROR")}>
+              Simular falha
+            </button>
+          )}
+        </div>
       ) : (
         <div className="stage-welcome">
           <img

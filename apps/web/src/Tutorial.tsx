@@ -159,8 +159,9 @@ const steps = [
           antigo.
         </p>
         <p>
-          Pode bloquear o celular: sua música continua na fila. Perto da sua vez
-          o celular vibra, e tocando em{" "}
+          Pode bloquear o celular: sua música continua na fila. Com o app
+          aberto, perto da sua vez o celular vibra (no iPhone, um toque leve) e
+          toca um aviso curto. Tocando em{" "}
           <strong>🔔 Me avise quando for minha vez</strong> você recebe aviso
           até com a tela bloqueada. No iPhone, para os avisos funcionarem,
           adicione o site à Tela de Início (Compartilhar → Adicionar à Tela de
