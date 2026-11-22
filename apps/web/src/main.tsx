@@ -34,6 +34,7 @@ import { PartyPreview } from "./PartyPreview";
 import { Tutorial } from "./Tutorial";
 import { GuidedTour, tourSeen, tourSteps } from "./GuidedTour";
 import { alertFeedback } from "./haptics";
+import { MiqueTip, type TipId } from "./MiqueTips";
 import {
   enablePush,
   pushStatus,
@@ -787,6 +788,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     } catch {
       return;
     }
+    tipDone("search");
     const mine = (latest.current?.songs || [])
       .filter(
         (s) =>
@@ -801,6 +803,9 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const host = room?.me.role === "member" && room?.hostId === room?.me.id;
   const tourRole = host ? "host" : "guest";
   const [tourOpen, setTourOpen] = useState(false);
+  const [tipsDone, setTipsDone] = useState<TipId[]>([]);
+  const tipDone = (id: TipId) =>
+    setTipsDone((old) => (old.includes(id) ? old : [...old, id]));
   const tourChecked = useRef(false);
   const roomReady = !!room && room.me.role === "member";
   // Trocar de aba volta ao topo, onde fica o cartão "o que fazer agora".
@@ -861,6 +866,11 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           : undefined;
   const alertKey = alertKind && `${alertKind}:${room?.current?.id}`;
   const [dismissedAlert, setDismissedAlert] = useState<string>();
+  // Votação abriu: volta ao topo da aba Sala, onde ficam as notas.
+  useEffect(() => {
+    if (alertKind === "vote" && tab === "room")
+      window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [alertKey]);
   useEffect(() => {
     if (!alertKey) return;
     // Vibra no Android; no iPhone usa o toque tátil do Safari e um som curto.
@@ -904,6 +914,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   }
   function react(type: string, value: string) {
     if (!online) return;
+    tipDone("react");
     socketRef.current
       ?.timeout(4000)
       .emit("reaction.send", { type, value }, (err: any, r: any) => {
@@ -1383,6 +1394,33 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           {error}
         </p>
       )}
+      {!stage &&
+        !tourOpen &&
+        room.me.role === "member" &&
+        room.state !== "CLOSED" &&
+        !feedback &&
+        !reactionFeedback && (
+          <MiqueTip
+            candidates={
+              room.canVote && room.myVote === undefined
+                ? ["vote"]
+                : tab === "room" &&
+                    room.state === "PLAYING" &&
+                    room.current?.singerId !== room.me.id &&
+                    room.settings.reactions
+                  ? ["react"]
+                  : tab === "search"
+                    ? ["search"]
+                    : tab === "stage" && host
+                      ? ["stage"]
+                      : []
+            }
+            done={[
+              ...tipsDone,
+              ...(room.myVote !== undefined ? (["vote"] as TipId[]) : []),
+            ]}
+          />
+        )}
       {alertKey &&
         alertKind !== "vote" &&
         tab !== "room" &&

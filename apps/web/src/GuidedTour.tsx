@@ -72,159 +72,68 @@ export function tourSteps(
   base: string,
   { tvOn = false } = {},
 ): TourStep[] {
+  // Tour curto: só o essencial do primeiro minuto. O resto o Míque explica
+  // na hora em que acontece (dicas em MiqueTips).
   const host = role === "host";
-  const welcome: TourStep = {
+  const roomId = base.split("/").pop() || "";
+  const hello: TourStep = {
     id: "oi",
     mood: "welcome",
     move: "wave",
     title: "E aí! Eu sou o Míque 🎤",
+    path: base,
+    target: ".action-card",
     body: (
       <>
         <p>
-          O microfone mais animado da festa!{" "}
-          {host
-            ? "Você é o anfitrião: em um minutinho eu te mostro como deixar tudo pronto."
-            : "Vou te mostrar rapidinho como pedir sua música, mandar energia e dar nota pra galera."}
+          O microfone mais animado da festa! Este cartão sempre mostra{" "}
+          <strong>o que fazer agora</strong>: escolher música, quanto falta pra
+          sua vez e a hora de votar. Na dúvida, olha pra ele!
         </p>
         <p className="tour-hint">Psiu: pode me cutucar 👈</p>
       </>
     ),
   };
-  const card: TourStep = {
-    id: "cartao",
-    mood: "step-2",
-    move: "peek",
-    title: "Este é o meu cantinho",
-    path: base,
-    target: ".action-card",
-    body: (
-      <p>
-        Este cartão sempre mostra <strong>o que fazer agora</strong>: escolher
-        música, quanto falta pra sua vez, quando é a sua vez e a hora de votar.
-        Na dúvida, olha pra ele! 😉
-      </p>
-    ),
-  };
-  const search: TourStep = {
-    id: "buscar",
-    mood: "step-3",
-    move: "hop",
-    title: "Escolha sua música",
-    path: `${base}/search`,
-    target: '[data-tour="search"]',
-    body: (
-      <p>
-        Digite a música ou o artista (o “karaoke” eu coloco sozinho). Achou? Um
-        toque em <strong>Adicionar</strong> e pronto, já tá na fila! Tocou sem
-        querer? Aparece um <strong>Desfazer</strong>.
-      </p>
-    ),
-  };
-  const roomId = base.split("/").pop() || "";
-  const alerts: TourStep = {
+  const alerts = (finale: boolean): TourStep => ({
     id: "avisos",
-    mood: "encouraging",
-    move: "hop",
+    mood: finale ? "celebration" : "encouraging",
+    move: finale ? "dance" : "hop",
     title: "Posso te chamar? 🔔",
+    confetti: finale,
     body: ({ celebrate }) => (
       <>
         <p>
           Pode bloquear o celular: sua música não sai da fila. Se deixar, eu te
           aviso quando você for o próximo, quando for sua vez e na hora de
-          votar, até com a tela bloqueada!
+          votar.
         </p>
         <PushSetup roomId={roomId} onEnabled={celebrate} />
+        {finale && (
+          <p>
+            <strong>Palco</strong> e <strong>Gerenciar</strong> ficam aqui
+            embaixo quando precisar. O resto eu vou te mostrando na hora! 😉
+          </p>
+        )}
       </>
     ),
-  };
-  const reactions: TourStep = {
-    id: "reagir",
-    mood: "groove",
-    move: "dance",
-    title: "Manda energia pro palco!",
-    path: base,
-    target: '[data-tour="reactions"]',
-    body: (
-      <p>
-        Experimente: <strong>toque num emoji</strong> aí embaixo! Ele aparece na
-        TV pra quem tá cantando. Cada pessoa também manda até{" "}
-        <strong>2 GIFs por música</strong>.
-      </p>
-    ),
-    tryIt: {
-      done: (
-        <p>
-          Uhuul! 🎉 Esse foi direto pra TV. Use sem moderação enquanto a galera
-          canta!
-        </p>
-      ),
-    },
-  };
-  const voting: TourStep = {
-    id: "votar",
-    mood: "celebration",
-    move: "spin",
-    title: "Hora da nota ⭐",
-    body: (
-      <p>
-        Nos <strong>últimos 20 segundos</strong> da música a votação aparece
-        aqui. Um toque na nota e pronto! Mudou de ideia? É só tocar em outra. Se
-        todo mundo der 10, quem cantou ganha um <strong>bis</strong>!
-      </p>
-    ),
-  };
-  const textSize: TourStep = {
-    id: "letras",
-    mood: "encouraging",
-    move: "peek",
-    title: "Letra pequena? Sem problema!",
-    target: ".text-size-toggle",
-    body: (
-      <p>
-        Experimente: toque no <strong>Aa</strong> aqui em cima pra deixar as
-        letras maiores.
-      </p>
-    ),
-    tryIt: {
-      done: (
-        <p>
-          Olha que letrão! 🤓 Se preferir como era, é só tocar no{" "}
-          <strong>Aa</strong> de novo.
-        </p>
-      ),
-    },
-  };
+  });
   const done: TourStep = {
     id: "pronto",
     mood: "celebration",
     move: "dance",
-    title: "Arrasou! Agora é com você 🎉",
+    title: "Prontinho! Bora cantar 🎉",
     target: '[data-tour="help"]',
     confetti: true,
     body: (
       <p>
-        Se esquecer de alguma coisa, toque em <strong>Tutorial</strong> que eu
-        volto correndo. Agora solta a voz!
+        O resto eu vou te mostrando na hora. Esqueceu algo? Toque em{" "}
+        <strong>Tutorial</strong>. Letra pequena? Toque em <strong>Aa</strong>.
       </p>
     ),
   };
-  if (!host)
-    return [welcome, card, search, alerts, reactions, voting, textSize, done];
-  const tv: TourStep = tvOn
-    ? {
-        id: "tv",
-        mood: "celebration",
-        move: "hop",
-        title: "A TV já tá ligada! 📺",
-        path: base,
-        target: '[data-tour="nav-stage"]',
-        body: (
-          <p>
-            Pronto, a festa já aparece na telona. Se um dia precisar trocar de
-            TV, é na aba <strong>Palco</strong>, em <strong>Ligar a TV</strong>.
-          </p>
-        ),
-      }
+  if (!host) return [hello, alerts(false), done];
+  const tv: TourStep | undefined = tvOn
+    ? undefined
     : {
         id: "tv",
         mood: "step-1",
@@ -249,47 +158,22 @@ export function tourSteps(
           </ol>
         ),
       };
-  return [
-    welcome,
-    tv,
-    {
-      id: "codigo",
-      mood: "step-2",
-      move: "wave",
-      title: "Chama a galera!",
-      path: base,
-      target: "[data-room-code]",
-      body: (
-        <p>
-          Seus amigos entram apontando a câmera pro <strong>QR da TV</strong>.
-          Quem não tiver câmera digita este código em{" "}
-          <strong>Tenho um código</strong>.
-        </p>
-      ),
-    },
-    card,
-    search,
-    {
-      id: "controles",
-      mood: "groove",
-      move: "dance",
-      title: "Sua mesa de som 🎛️",
-      path: `${base}/stage`,
-      target: '[data-tour="stage-controls"]',
-      body: (
-        <p>
-          Na aba <strong>Palco</strong> você liga a fila automática, pausa e
-          pula músicas. Em <strong>Gerenciar</strong>, libera entradas, passa o
-          comando ou encerra a festa no fim da noite.
-        </p>
-      ),
-    },
-    alerts,
-    reactions,
-    voting,
-    textSize,
-    done,
-  ];
+  const invite: TourStep = {
+    id: "galera",
+    mood: "step-2",
+    move: "wave",
+    title: "Chama a galera!",
+    path: base,
+    target: "[data-room-code]",
+    body: (
+      <p>
+        Seus amigos entram apontando a câmera pro <strong>QR da TV</strong>.
+        Quem não tiver câmera digita este código em{" "}
+        <strong>Tenho um código</strong>.
+      </p>
+    ),
+  };
+  return [hello, ...(tv ? [tv] : []), invite, alerts(true)];
 }
 
 type Box = { top: number; left: number; width: number; height: number };
