@@ -11,7 +11,11 @@ jobs:
           POSTGRES_USER: karaoke
           POSTGRES_PASSWORD: karaoke
         ports: ["54329:5432"]
-        options: --health-cmd 'pg_isready -U karaoke -d karaoke_dev' --health-interval 5s --health-timeout 3s --health-retries 10
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://karaoke:karaoke@127.0.0.1:54329/karaoke_dev
       INTEGRATION_MODE: demo
@@ -32,3 +36,22 @@ jobs:
       - run: pnpm test:server
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+  deploy:
+    # Dispara o deploy no Coolify só depois dos testes passarem na main.
+    # Requer os secrets COOLIFY_WEBHOOK (URL "Deploy Webhook" do recurso) e
+    # COOLIFY_TOKEN (API token do Coolify com permissão de deploy).
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy no Coolify
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK" ] || [ -z "$COOLIFY_TOKEN" ]; then
+            echo "::warning::Secrets COOLIFY_WEBHOOK/COOLIFY_TOKEN ausentes; deploy ignorado."
+            exit 0
+          fi
+          curl --fail-with-body -sS -X GET "$COOLIFY_WEBHOOK" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN"
