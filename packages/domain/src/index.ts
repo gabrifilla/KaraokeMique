@@ -25,8 +25,11 @@ export function requireRule(
 ): asserts ok {
   if (!ok) throw new RuleError(code, message, status);
 }
+// Celular bloqueado derruba o socket, mas a pessoa continua na festa: a fila
+// só suspende os itens após uma ausência longa (ou ao sair/ser removida).
+export const QUEUE_ABSENCE_MS = 2 * 60 * 60 * 1000;
 export const active = (p: Person, now: number) =>
-  p.status === "ACTIVE" && now - p.lastSeen < 60000;
+  p.status === "ACTIVE" && now - p.lastSeen < QUEUE_ABSENCE_MS;
 export function searchQuery(q: string) {
   const s = q.trim().replace(/\s+/g, " ");
   return /\bkaraoke\b/i.test(s) ? s : `${s} karaoke`;

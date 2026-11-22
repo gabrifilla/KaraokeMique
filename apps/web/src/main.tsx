@@ -608,8 +608,17 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       s.disconnect();
     };
     const online = () => s.connect();
+    // Ao desbloquear o celular/voltar à aba, reconecta na hora em vez de
+    // esperar o backoff do socket.io, e pede o estado atual da sala.
+    const resumed = () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      if (s.connected) s.emit("session.sync");
+      else s.connect();
+    };
     window.addEventListener("offline", offline);
     window.addEventListener("online", online);
+    document.addEventListener("visibilitychange", resumed);
+    window.addEventListener("pageshow", resumed);
     const heart = setInterval(() => {
       if (s.connected) s.emit("presence.heartbeat");
     }, 5000);
@@ -623,6 +632,8 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       cancelled = true;
       window.removeEventListener("offline", offline);
       window.removeEventListener("online", online);
+      document.removeEventListener("visibilitychange", resumed);
+      window.removeEventListener("pageshow", resumed);
       s.disconnect();
       s.removeAllListeners();
       socketRef.current = null;

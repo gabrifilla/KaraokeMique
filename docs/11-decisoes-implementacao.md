@@ -11,7 +11,7 @@ As propostas dos documentos 02 e 09 foram adotadas como padrões iniciais revis�
 | API | Prefixo `/api/v1`; mutações de domínio concentradas em `/rooms/:id/commands` com schema compartilhado. Não duplicar handler por transporte. HTTP responde ACK; Socket.IO publica snapshots completos |
 | Segurança | Cookie HttpOnly separado por sala e papel; só hash no banco. SameSite Lax, Secure quando HTTPS, Origin estrito e token CSRF. QR contém somente convite público. Nenhuma chave administrativa em URL |
 | Pareamento | Anfitrião autoriza previamente um código de 96 bits por 2min e entrega à tela confiável, que o consome uma vez. Simplificação do fluxo de solicitação/aprovação do documento 05. Não basta conhecer o convite público. Substituição incrementa epoch e revoga sessão anterior |
-| Presença | Heartbeat a cada 5s; fila tolera 60s, palco 15s; votação considera atividade recente (<15s) e sockets conectados no instante de abertura. Presença não é autenticação |
+| Presença | Heartbeat a cada 5s; fila tolera 2h de ausência (celular bloqueado não tira ninguém da fila), palco 15s; votação considera atividade recente (<15s) e sockets conectados no instante de abertura. Presença não é autenticação |
 | Recuperação | Identidade em cookie; snapshot versionado em handshake, evento e heartbeat; recibos persistidos por sessão/commandId; outbox até publicação. Voto expirado jamais reenviado offline |
 | GIFs | GIPHY direto do browser, pg-13, sem proxy/cache; resolução por ID somente no palco; falha omite reação. Texto de atribuição presente; revisão gráfica/analytics do fornecedor pendente de homologação de produção |
 | Mascote | Original preservado; cópia em `apps/web/public/mascot.png`, sem transformações destrutivas |

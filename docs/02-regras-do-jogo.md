@@ -12,7 +12,7 @@ As regras explicitamente pedidas são a base. Valores e comportamentos adicionai
 - O identificador do participante é estável durante a sala e independente da conexão WebSocket.
 - Uma sessão pode abrir várias abas; continua sendo uma pessoa e tendo um voto por apresentação.
 - Sem login, perder a sessão local pode impedir recuperação da identidade. Reentrar não elimina registros anteriores e pode ser moderado pelo anfitrião.
-- Ao sair explicitamente, os itens pendentes ficam suspensos. Ao cair a conexão, há tolerância de 60 segundos antes da suspensão. Reconexão restaura a elegibilidade dos itens.
+- Ao sair explicitamente, os itens pendentes ficam suspensos. Ao cair a conexão (por exemplo, celular bloqueado), os itens continuam na fila por até 2 horas antes da suspensão; o palco toca normalmente mesmo com o celular de quem canta bloqueado. Reconexão restaura a elegibilidade dos itens.
 - Uma sala tem exatamente um anfitrião. Transferência exige ação explícita; não eleger automaticamente um desconhecido por ordem de entrada.
 
 ## Estados da sessão

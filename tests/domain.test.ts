@@ -159,13 +159,16 @@ describe("Fila justa", () => {
     for (const s of ["A3", "B2", "C1", "C2"]) song(r, s[0], s);
     expect(forecast(r, now).map((x) => x.id)).toEqual(["C1", "B2", "C2", "A3"]);
   });
-  it("não desloca a reserva e suspende ausência após 60s", () => {
+  it("não desloca a reserva e só suspende após ausência longa", () => {
     const r = fixture();
     song(r, "A", "A1");
     run(r, "A", "PREPARE");
     song(r, "B", "B1");
     expect(r.current?.songId).toBe("A1");
-    r.people[1].lastSeen = now - 60000;
+    // Celular bloqueado por alguns minutos não tira a música da fila.
+    r.people[1].lastSeen = now - 30 * 60000;
+    expect(forecast(r, now)[0].id).toBe("B1");
+    r.people[1].lastSeen = now - 2 * 60 * 60000;
     expect(forecast(r, now)).toEqual([]);
     r.people[1].lastSeen = now;
     expect(forecast(r, now)[0].id).toBe("B1");
