@@ -34,6 +34,11 @@ export function serveFrontend(
     index: false,
     dotfiles: "deny",
     setHeaders(res: Response, file: string) {
+      // Ícones, imagens e manifesto podem ser lidos fora da página: o iOS
+      // busca o ícone da Tela de Início por um carregador próprio, e o
+      // "same-origin" padrão do helmet pode fazê-lo cair no ícone com a letra.
+      if (/\.(png|ico|webp|svg|webmanifest)$/.test(file))
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader(
         "Cache-Control",
         file.includes(`${sep}assets${sep}`)
