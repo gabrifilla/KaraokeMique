@@ -73,6 +73,7 @@ const stateNames: Record<string, string> = {
   CLOSED: "Foi bom demais!",
 };
 const avatars = ["🎤", "🌟", "🎸", "🪩", "🎧"];
+const STAGE_RESET_MS = 20000;
 // Letras grandes: preferência de cada celular, aplicada antes de desenhar.
 const textSizeKey = "karaoke.textSize";
 function readLargeText() {
@@ -806,6 +807,21 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   useEffect(() => {
     if (!stage) window.scrollTo({ top: 0, behavior: "instant" });
   }, [tab, stage]);
+  // Festa encerrada: a TV volta sozinha para o QR, pronta para a próxima.
+  const closed = room?.state === "CLOSED";
+  useEffect(() => {
+    if (!stage || !closed) return;
+    const t = setTimeout(
+      () => navigate("/stage/tv", { replace: true }),
+      STAGE_RESET_MS,
+    );
+    return () => clearTimeout(t);
+  }, [stage, closed]);
+  // No celular, a festa encerrada mostra o cartão final na aba Sala.
+  useEffect(() => {
+    if (!stage && closed && !["room", "summary"].includes(tab))
+      navigate(`/r/${id}`, { replace: true });
+  }, [stage, closed, tab]);
   const [push, setPush] = useState<PushStatus>("unsupported");
   useEffect(() => {
     if (stage || !roomReady) return;
@@ -1457,13 +1473,33 @@ function RoomView({ stage = false }: { stage?: boolean }) {
               room.current &&
               result(room.current, true)}
             {room.state === "CLOSED" && (
-              <h1>Obrigado pelo show. Até o próximo bis!</h1>
+              <section className="stage-closed">
+                <img src="/mascot/v3/celebration.webp" alt="" />
+                <h1>Obrigado pelo show. Até o próximo bis!</h1>
+                <p>
+                  Em{" "}
+                  {Math.max(
+                    0,
+                    Math.ceil(
+                      (STAGE_RESET_MS - (clock - (room.closedAt || clock))) /
+                        1000,
+                    ),
+                  )}{" "}
+                  segundos esta TV mostra o QR para uma nova festa.
+                </p>
+                <button
+                  onClick={() => navigate("/stage/tv", { replace: true })}
+                >
+                  📺 Começar uma nova festa nesta TV
+                </button>
+              </section>
             )}
             <EmojiRain reactions={reactions} hidden={hideReactions} />
           </div>
           <aside className="stage-sidebar">
-            {inviteCard}
-            {queue}
+            {/* Festa encerrada: o QR antigo levaria a uma sala fechada. */}
+            {room.state !== "CLOSED" && inviteCard}
+            {room.state !== "CLOSED" && queue}
             <GifSpotlight
               reactions={reactions}
               hidden={hideReactions || !room.settings.gifs}
@@ -1487,6 +1523,36 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 {room.people.find((p) => p.id === room.me.id)?.avatar}
               </span>
             </section>
+            {room.state === "CLOSED" && (
+              <section className="action-card closed-card" data-kind="closed">
+                <p className="action-eyebrow">Festa encerrada</p>
+                <h2>A festa acabou! 🎉</h2>
+                <p>
+                  Obrigado pelo show! Quer continuar cantando? Comece outra
+                  festa ou entre na de alguém.
+                </p>
+                <Link className="button action-main" to="/rooms/new">
+                  🎤 Começar uma nova festa
+                </Link>
+                <Link className="button secondary" to="/join">
+                  Entrar em outra festa
+                </Link>
+                <Link className="text-link" to="/">
+                  Voltar ao início
+                </Link>
+                {host && room.epoch > 0 && (
+                  <p className="closed-tip">
+                    📺 A TV vai mostrar um QR novo: aponte a câmera para ele e a
+                    próxima festa já começa nela.
+                  </p>
+                )}
+                <img
+                  className="action-mascot"
+                  src="/mascot/v3/celebration.webp"
+                  alt=""
+                />
+              </section>
+            )}
             {(room.state === "VOTING" || earlyVoting) &&
               tab !== "room" &&
               voting}
@@ -2008,28 +2074,30 @@ function RoomView({ stage = false }: { stage?: boolean }) {
               </Link>
             )}
           </main>
-          <nav className="bottom-nav" aria-label="Navegação da sala">
-            {[
-              ["room", "home", "Sala"],
-              ["search", "search", "Buscar"],
-              [
-                host ? "stage" : "queue",
-                "queue",
-                host ? "Palco" : "Minhas músicas",
-              ],
-              ["people", "people", host ? "Gerenciar" : "Pessoas"],
-            ].map(([key, icon, label]) => (
-              <Link
-                key={key}
-                data-tour={`nav-${key}`}
-                aria-current={tab === key ? "page" : undefined}
-                to={`/r/${id}${key === "room" ? "" : `/${key}`}`}
-              >
-                <Icon name={icon as "home" | "search" | "queue" | "people"} />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          {room.state !== "CLOSED" && (
+            <nav className="bottom-nav" aria-label="Navegação da sala">
+              {[
+                ["room", "home", "Sala"],
+                ["search", "search", "Buscar"],
+                [
+                  host ? "stage" : "queue",
+                  "queue",
+                  host ? "Palco" : "Minhas músicas",
+                ],
+                ["people", "people", host ? "Gerenciar" : "Pessoas"],
+              ].map(([key, icon, label]) => (
+                <Link
+                  key={key}
+                  data-tour={`nav-${key}`}
+                  aria-current={tab === key ? "page" : undefined}
+                  to={`/r/${id}${key === "room" ? "" : `/${key}`}`}
+                >
+                  <Icon name={icon as "home" | "search" | "queue" | "people"} />
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
         </>
       )}
     </div>

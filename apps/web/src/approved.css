@@ -1418,3 +1418,37 @@ h2 {
   padding-left: 18px;
   list-style: decimal;
 }
+.closed-card .button {
+  justify-self: stretch;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.closed-card .button.secondary {
+  background: transparent;
+  color: var(--paper-ink);
+  border: 1px solid rgb(54 33 46 / 35%);
+}
+.closed-card .text-link {
+  justify-self: start;
+  color: var(--paper-ink);
+  font-weight: 700;
+}
+.closed-card .closed-tip {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.stage-closed {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+}
+.stage-closed img {
+  width: clamp(160px, 26vh, 260px);
+}
+.stage-closed p {
+  color: var(--muted);
+  font-size: 1.2rem;
+}

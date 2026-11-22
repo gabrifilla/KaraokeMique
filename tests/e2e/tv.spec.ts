@@ -55,6 +55,18 @@ test("TV autorizada pelo QR no celular e abertura direta com um toque", async ({
       .click();
     await host.getByRole("button", { name: "Confirmar", exact: true }).click();
     await expect(phone.locator('[data-state="CLOSED"]')).toBeVisible();
+    // Encerrou: o palco oferece voltar ao QR e o celular, começar outra festa.
+    await phone
+      .getByRole("button", { name: /Começar uma nova festa nesta TV/ })
+      .click();
+    await expect(phone).toHaveURL(/\/stage\/tv$/);
+    await expect(phone.locator(".tv-code")).toHaveText(/^\d{6}$/);
+    await expect(
+      host.getByRole("heading", { name: /A festa acabou/ }),
+    ).toBeVisible();
+    await expect(host.locator(".bottom-nav")).toHaveCount(0);
+    await host.getByRole("link", { name: /Começar uma nova festa/ }).click();
+    await expect(host).toHaveURL(/\/rooms\/new$/);
   } finally {
     await Promise.allSettled([hostContext.close(), tvContext.close()]);
   }

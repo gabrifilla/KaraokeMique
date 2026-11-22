@@ -426,7 +426,9 @@ test("anfitrião, dois celulares e palco: fila, voto, bis, reconexão e moderaç
     await expect(
       b.getByRole("heading", { name: "Foi bom demais!" }),
     ).toBeVisible();
-    await qrInViewport();
+    // Festa encerrada: a TV agradece e esconde o QR da sala fechada.
+    await expect(stage.locator(".stage-closed")).toBeVisible();
+    await expect(stage.locator(".invite")).toHaveCount(0);
   } finally {
     await Promise.allSettled(contexts.map((c) => c.close()));
   }
