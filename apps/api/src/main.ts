@@ -582,6 +582,21 @@ async function syncSocket(socket: any) {
   socket.emit("room.state", project(r, a, Date.now(), mode));
   return r;
 }
+// GIFs por pessoa na apresentação atual (memória; instância única).
+const GIFS_PER_SONG = 2;
+const gifUsage = new Map<
+  string,
+  { performance: string; counts: Map<string, number> }
+>();
+function gifUsageFor(roomId: string, performance: string) {
+  let usage = gifUsage.get(roomId);
+  if (!usage && gifUsage.size > 5000) gifUsage.clear();
+  if (!usage || usage.performance !== performance) {
+    usage = { performance, counts: new Map() };
+    gifUsage.set(roomId, usage);
+  }
+  return usage.counts;
+}
 io.on("connection", (socket) => {
   const { id, actor } = socket.data as { id: string; actor: Actor };
   socket.join(`room:${id}`);
@@ -637,20 +652,34 @@ io.on("connection", (socket) => {
           }),
         ])
         .parse(raw);
-      if (b.type === "GIF")
+      const gifCounts =
+        b.type === "GIF" ? gifUsageFor(id, r.current?.id ?? "idle") : undefined;
+      const gifsUsed = gifCounts?.get(a.id) ?? 0;
+      if (b.type === "GIF") {
         requireRule(r.settings.gifs, "GIFS_OFF", "GIFs desativados.");
+        requireRule(
+          gifsUsed < GIFS_PER_SONG,
+          "GIF_LIMIT",
+          `Você já mandou ${GIFS_PER_SONG} GIFs nesta música. Mande emojis ou espere a próxima!`,
+          429,
+        );
+      }
       limit(
         `reaction:${a.id}:${b.type}`,
         b.type === "GIF" ? 1 : 3,
         b.type === "GIF" ? 3000 : 1000,
       );
+      gifCounts?.set(a.id, gifsUsed + 1);
       io.to(`room:${id}`).emit("reaction.display", {
         ...b,
         id: randomUUID(),
         senderName: r.people.find((p) => p.id === a.id)?.name || "Participante",
         expiresAt: Date.now() + 5000,
       });
-      ack({ ok: true });
+      ack({
+        ok: true,
+        gifsLeft: gifCounts ? GIFS_PER_SONG - gifsUsed - 1 : undefined,
+      });
     } catch (e) {
       ack({ error: e instanceof RuleError ? e.message : "Reação inválida." });
     }

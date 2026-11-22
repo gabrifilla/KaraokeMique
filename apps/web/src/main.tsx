@@ -218,7 +218,7 @@ function Entrance() {
           ) : (
             <div className="entry-companion">
               <img
-                src="/mascot/v3/welcome.png"
+                src="/mascot/v3/welcome.webp"
                 alt="Mascote microfone esperando a galera"
               />
               <div>
@@ -327,7 +327,7 @@ function Entrance() {
           <ol>
             <li>
               <img
-                src="/mascot/v3/step-1.png"
+                src="/mascot/v3/step-1.webp"
                 alt=""
                 width="200"
                 height="200"
@@ -340,7 +340,7 @@ function Entrance() {
             </li>
             <li>
               <img
-                src="/mascot/v3/step-2.png"
+                src="/mascot/v3/step-2.webp"
                 alt=""
                 width="200"
                 height="200"
@@ -353,7 +353,7 @@ function Entrance() {
             </li>
             <li>
               <img
-                src="/mascot/v3/step-3.png"
+                src="/mascot/v3/step-3.webp"
                 alt=""
                 width="200"
                 height="200"
@@ -525,6 +525,15 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       setRoom(next);
     }
   };
+  useEffect(() => {
+    // Os mascotes do resultado são background-image: só baixariam na hora
+    // da nota. Pré-carrega para aparecerem instantaneamente.
+    const idle = setTimeout(() => {
+      for (const mood of ["confused", "encouraging", "groove", "celebration"])
+        new Image().src = `/mascot/v3/${mood}.webp`;
+    }, 1500);
+    return () => clearTimeout(idle);
+  }, []);
   useEffect(() => {
     let cancelled = false;
     latest.current = undefined;
@@ -702,7 +711,14 @@ function RoomView({ stage = false }: { stage?: boolean }) {
         else if (r.error) setError(r.error);
         else
           setReactionFeedback({
-            message: type === "GIF" ? "GIF enviado" : "Reação enviada",
+            message:
+              type === "GIF"
+                ? r.gifsLeft === 0
+                  ? "GIF enviado · esse foi seu último GIF nesta música"
+                  : r.gifsLeft === 1
+                    ? "GIF enviado · você ainda tem 1 GIF nesta música"
+                    : "GIF enviado"
+                : "Reação enviada",
           });
       });
   }
@@ -757,14 +773,29 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   );
   const singer = room.people.find((p) => p.id === room.current?.singerId);
   const round = room.current?.round;
+  // Votação antecipada: aberta nos últimos 20s, ainda sem prazo final.
+  const earlyVoting =
+    !!round &&
+    round.closedAt === undefined &&
+    round.deadline === undefined &&
+    ["PLAYING", "PAUSED"].includes(room.state);
+  const votingClosed = round?.deadline !== undefined && clock >= round.deadline;
   const voting = (
     <section className="card vote" aria-label="Votação da apresentação">
-      <p className="eyebrow">{singer?.name} DEU UM SHOW</p>
+      <p className="eyebrow">
+        {singer?.name} {earlyVoting ? "TÁ NA RETA FINAL" : "DEU UM SHOW"}
+      </p>
       <h2>{stage ? "Vote pelo celular" : "Qual nota essa voz merece?"}</h2>
-      <div className="countdown" aria-label="Tempo restante">
-        {Math.max(0, Math.ceil(((round?.deadline || 0) - clock) / 1000))}
-        <small> segundos</small>
-      </div>
+      {earlyVoting ? (
+        <p className="countdown-note" role="status">
+          Votação aberta! Fecha 10 segundos depois que a música acabar.
+        </p>
+      ) : (
+        <div className="countdown" aria-label="Tempo restante">
+          {Math.max(0, Math.ceil(((round?.deadline || 0) - clock) / 1000))}
+          <small> segundos</small>
+        </div>
+      )}
       <p>
         {round?.received} de {round?.eligibleCount} votos recebidos
       </p>
@@ -781,7 +812,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                   aria-label={`Nota ${n}`}
                   aria-pressed={score === n}
                   className={score === n ? "selected" : "quiet"}
-                  disabled={!online || busy || clock >= (round?.deadline || 0)}
+                  disabled={!online || busy || votingClosed}
                   onClick={() => setScore(n)}
                 >
                   {n}
@@ -789,12 +820,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
               ))}
             </div>
             <button
-              disabled={
-                score === undefined ||
-                busy ||
-                !online ||
-                clock >= (round?.deadline || 0)
-              }
+              disabled={score === undefined || busy || !online || votingClosed}
               onClick={() => act("VOTE", { score })}
             >
               Confirmar nota {score ?? ""}
@@ -1052,7 +1078,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 {room.people.find((p) => p.id === room.me.id)?.avatar}
               </span>
             </section>
-            {room.state === "VOTING" && voting}
+            {(room.state === "VOTING" || earlyVoting) && voting}
             {room.state === "RESULTS" &&
               room.current &&
               result(room.current, true)}
@@ -1140,7 +1166,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 )}
                 {room.state === "LOBBY" && (
                   <section className="card lobby">
-                    <img src="/mascot/v3/welcome.png" alt="Mascote microfone" />
+                    <img
+                      src="/mascot/v3/welcome.webp"
+                      alt="Mascote microfone"
+                    />
                     <div>
                       <h2>Quem vai puxar a primeira?</h2>
                       <p>Busque sua música favorita e entre na fila.</p>

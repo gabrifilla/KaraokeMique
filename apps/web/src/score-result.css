@@ -40,16 +40,16 @@
   flex-shrink: 0;
 }
 .mascot-confused {
-  background-image: url("/mascot/v3/confused.png");
+  background-image: url("/mascot/v3/confused.webp");
 }
 .mascot-encouraging {
-  background-image: url("/mascot/v3/encouraging.png");
+  background-image: url("/mascot/v3/encouraging.webp");
 }
 .mascot-groove {
-  background-image: url("/mascot/v3/groove.png");
+  background-image: url("/mascot/v3/groove.webp");
 }
 .mascot-celebration {
-  background-image: url("/mascot/v3/celebration.png");
+  background-image: url("/mascot/v3/celebration.webp");
 }
 .score-result > p.result-phrase {
   color: #f1e9ff;

@@ -4,12 +4,7 @@ export function Brand() {
   return (
     <Link to="/" className="brand">
       <span className="brand-mark">
-        <img
-          src="/mascot/v3/portrait-original-redraw.png"
-          alt=""
-          width="64"
-          height="64"
-        />
+        <img src="/mascot/v3/brand-mark.webp" alt="" width="64" height="64" />
       </span>
       <span className="brand-name">
         <strong>Karaoke Míque</strong>

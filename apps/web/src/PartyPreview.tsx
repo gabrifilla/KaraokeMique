@@ -34,7 +34,7 @@ export function PartyPreview() {
           </span>
         </div>
         <img
-          src="/mascot/v3/welcome.png"
+          src="/mascot/v3/welcome.webp"
           alt="Mascote microfone pronto para a festa"
         />
         <span className="preview-spark spark-one" aria-hidden="true">

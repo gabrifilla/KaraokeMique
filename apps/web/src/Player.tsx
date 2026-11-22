@@ -31,6 +31,7 @@ function loadYoutube() {
     document.head.append(s);
   }));
 }
+const FINALE_SECONDS = 20;
 export function Player({
   room,
   socket,
@@ -206,6 +207,24 @@ export function Player({
       socket?.off("disconnect", disconnected);
     };
   }, [socket, demo]);
+  // Avisa o servidor quando faltam ~20s para abrir a votação antecipada.
+  const finaleOpen = !!room.current?.round;
+  useEffect(() => {
+    if (demo || !ready || room.state !== "PLAYING" || finaleOpen) return;
+    let sent = false;
+    const check = () => {
+      const p = player.current;
+      const duration = p?.getDuration?.() || 0;
+      const time = p?.getCurrentTime?.() || 0;
+      if (!sent && duration > 0 && duration - time <= FINALE_SECONDS) {
+        sent = true;
+        send("FINALE");
+      }
+    };
+    check();
+    const timer = setInterval(check, 1000);
+    return () => clearInterval(timer);
+  }, [perfId, demo, ready, room.state, finaleOpen]);
   useEffect(() => {
     if (
       ["PAUSED", "RECOVERY", "VOTING", "RESULTS", "CLOSED"].includes(room.state)
@@ -242,6 +261,11 @@ export function Player({
                     : "▶ Tocar no palco"}
                 </button>
               )}
+            {demo && room.state === "PLAYING" && !finaleOpen && (
+              <button className="quiet" onClick={() => send("FINALE")}>
+                Simular reta final
+              </button>
+            )}
             {demo && room.state === "PLAYING" && (
               <button onClick={() => send("ENDED")}>Simular término</button>
             )}
@@ -256,7 +280,7 @@ export function Player({
       ) : (
         <div className="stage-welcome">
           <img
-            src="/mascot/v3/welcome.png"
+            src="/mascot/v3/welcome.webp"
             alt="Mascote microfone dando boas-vindas"
           />
           <p className="eyebrow">TODO MUNDO TEM SUA VEZ</p>

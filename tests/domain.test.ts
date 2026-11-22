@@ -232,6 +232,79 @@ describe("Votação e bis", () => {
     expect(r.current!.round!.count).toBe(1);
     expect(r.offer).toBeUndefined();
   });
+  it("abre a votação na reta final e fecha 10s após o término", () => {
+    const r = fixture();
+    playing(r);
+    expect(() => run(r, "B", "VOTE", { score: 8 })).toThrow("ainda não");
+    run(r, "stage", "REPORT", {
+      event: "FINALE",
+      performanceId: r.current!.id,
+      seq: 2,
+    });
+    expect(r.state).toBe("PLAYING");
+    expect(r.current!.round!.deadline).toBeUndefined();
+    expect(() => run(r, "A", "VOTE", { score: 10 })).toThrow("si");
+    // Todos votarem durante a música não encerra antes do fim.
+    run(r, "B", "VOTE", { score: 8 });
+    run(r, "C", "VOTE", { score: 6 });
+    expect(r.state).toBe("PLAYING");
+    maintain(r, now + 10000);
+    expect(r.state).toBe("PLAYING");
+    expect(r.current!.round!.closedAt).toBeUndefined();
+    run(
+      r,
+      "stage",
+      "REPORT",
+      {
+        event: "ENDED",
+        performanceId: r.current!.id,
+        seq: 3,
+      },
+      now + 20000,
+    );
+    expect(r.state).toBe("RESULTS");
+    expect(r.current!.round!.average).toBe(7);
+  });
+  it("votos antecipados se somam aos do pós-música", () => {
+    const r = fixture();
+    playing(r);
+    run(r, "stage", "REPORT", {
+      event: "FINALE",
+      performanceId: r.current!.id,
+      seq: 2,
+    });
+    run(r, "B", "VOTE", { score: 9 });
+    run(
+      r,
+      "stage",
+      "REPORT",
+      {
+        event: "ENDED",
+        performanceId: r.current!.id,
+        seq: 3,
+      },
+      now + 20000,
+    );
+    expect(r.state).toBe("VOTING");
+    expect(r.current!.round!.deadline).toBe(now + 30000);
+    expect(() => run(r, "B", "VOTE", { score: 9 }, now + 21000)).toThrow(
+      "registrado",
+    );
+    run(r, "C", "VOTE", { score: 7 }, now + 29999);
+    expect(r.current!.round!.average).toBe(8);
+  });
+  it("pular a música descarta votos antecipados", () => {
+    const r = fixture();
+    playing(r);
+    run(r, "stage", "REPORT", {
+      event: "FINALE",
+      performanceId: r.current!.id,
+      seq: 2,
+    });
+    run(r, "B", "VOTE", { score: 9 });
+    run(r, "A", "SKIP");
+    expect(r.history.at(-1)!.round).toBeUndefined();
+  });
   it("zero elegíveis encerra imediatamente com média nula", () => {
     const r = fixture();
     r.people = r.people.slice(0, 1);

@@ -662,6 +662,15 @@ h2 {
   box-shadow: none;
   line-height: 1;
 }
+.vote > p.countdown-note {
+  display: inline-block;
+  margin: 4px 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--yellow);
+  color: var(--paper-ink);
+  font-weight: 700;
+}
 .vote .countdown small {
   font-size: 0.55rem;
   color: #664c24;

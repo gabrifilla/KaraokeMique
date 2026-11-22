@@ -144,6 +144,39 @@ export function eligibleSong(room: Room, id: string, now: number) {
       room.people.some((p) => p.id === s.personId && active(p, now)),
   );
 }
+// A votação abre nos últimos 20s da música (avisado pelo palco) e fecha 10s
+// depois do fim do vídeo.
+export const VOTE_EARLY_MS = 20000;
+export const VOTE_AFTER_MS = 10000;
+const EARLY_VOTING_STATES = ["PLAYING", "PAUSED"];
+export function votingOpen(room: Room, now: number) {
+  const r = room.current?.round;
+  if (!r || r.closedAt !== undefined) return false;
+  if (room.state === "VOTING")
+    return r.deadline !== undefined && now < r.deadline;
+  return EARLY_VOTING_STATES.includes(room.state) && r.deadline === undefined;
+}
+function connectedVoters(room: Room, singerId: string, now: number) {
+  return room.people
+    .filter(
+      (x) => active(x, now) && x.id !== singerId && now - x.lastSeen < 15000,
+    )
+    .map((x) => x.id);
+}
+export function canVote(room: Room, personId: string, now: number) {
+  const r = room.current?.round;
+  if (!r || !votingOpen(room, now) || r.votes[personId] !== undefined)
+    return false;
+  if (r.eligible.includes(personId)) return true;
+  // Na reta final, quem desbloqueia o celular depois da abertura também vota.
+  const person = room.people.find((p) => p.id === personId);
+  return (
+    room.state !== "VOTING" &&
+    !!person &&
+    active(person, now) &&
+    personId !== room.current!.singerId
+  );
+}
 export function finishVoting(room: Room, now: number, reason = "DEADLINE") {
   const r = room.current?.round;
   if (!r || r.closedAt !== undefined) return;
@@ -188,7 +221,7 @@ export function maintain(room: Room, now: number) {
     room.offer.state = "EXPIRED";
   if (
     room.state === "VOTING" &&
-    room.current?.round &&
+    room.current?.round?.deadline !== undefined &&
     now >= room.current.round.deadline
   )
     finishVoting(room, now);
@@ -246,6 +279,8 @@ function cancel(room: Room, now: number, technical: boolean) {
     singer.turns = Math.max(0, singer.turns - 1);
     p.turnReverted = true;
   }
+  // Votos antecipados não valem para apresentação interrompida.
+  if (p.round && p.round.closedAt === undefined) p.round = undefined;
   p.outcome = technical ? "FAILED" : "SKIPPED";
   p.endedAt = now;
   room.songs.find((s) => s.id === p.songId)!.status = technical
@@ -475,22 +510,32 @@ export function apply(
       ) {
         room.recoveryFrom = room.state;
         room.state = "RECOVERY";
-      } else if (event === "ENDED" && room.state === "PLAYING") {
-        room.state = "VOTING";
+      } else if (
+        event === "FINALE" &&
+        EARLY_VOTING_STATES.includes(room.state) &&
+        !p.round
+      ) {
         p.round = {
-          eligible: room.people
-            .filter(
-              (x) =>
-                active(x, now) &&
-                x.id !== p.singerId &&
-                now - x.lastSeen < 15000,
-            )
-            .map((x) => x.id),
+          eligible: connectedVoters(room, p.singerId, now),
           votes: {},
           openedAt: now,
-          deadline: now + 10000,
         };
-        if (!p.round.eligible.length) finishVoting(room, now, "ALL_VOTED");
+      } else if (event === "ENDED" && room.state === "PLAYING") {
+        room.state = "VOTING";
+        const early = p.round;
+        p.round = {
+          eligible: [
+            ...new Set([
+              ...(early?.eligible || []),
+              ...connectedVoters(room, p.singerId, now),
+            ]),
+          ],
+          votes: early?.votes || {},
+          openedAt: early?.openedAt ?? now,
+          deadline: now + VOTE_AFTER_MS,
+        };
+        if (p.round.eligible.every((id) => p.round!.votes[id] !== undefined))
+          finishVoting(room, now, "ALL_VOTED");
       }
       break;
     }
@@ -498,9 +543,11 @@ export function apply(
       requireRule(me, "FORBIDDEN", "Somente participantes votam.", 403);
       const r = room.current?.round;
       requireRule(
-        room.state === "VOTING" && r && now < r.deadline,
+        r && votingOpen(room, now),
         "VOTING_CLOSED",
-        "A votação já terminou.",
+        room.state === "VOTING"
+          ? "A votação já terminou."
+          : "A votação ainda não está aberta.",
         409,
       );
       requireRule(
@@ -509,7 +556,7 @@ export function apply(
         "Você não pode votar em si.",
       );
       requireRule(
-        r.eligible.includes(me.id),
+        canVote(room, me.id, now) || r.votes[me.id] !== undefined,
         "NOT_ELIGIBLE",
         "Você não participa desta votação.",
         403,
@@ -527,8 +574,12 @@ export function apply(
         "Seu voto já foi registrado.",
         409,
       );
+      if (!r.eligible.includes(me.id)) r.eligible.push(me.id);
       r.votes[me.id] = payload.score as number;
-      if (r.eligible.every((id) => r.votes[id] !== undefined))
+      if (
+        room.state === "VOTING" &&
+        r.eligible.every((id) => r.votes[id] !== undefined)
+      )
         finishVoting(room, now, "ALL_VOTED");
       break;
     }
@@ -582,10 +633,13 @@ export function apply(
       if (room.state === "PREPARING" && room.current?.singerId === target.id)
         cancel(room, now, true);
       const r = room.current?.round;
-      if (room.state === "VOTING" && r) {
+      if (r && r.closedAt === undefined) {
         r.eligible = r.eligible.filter((id) => id !== target.id);
         delete r.votes[target.id];
-        if (r.eligible.every((id) => r.votes[id] !== undefined))
+        if (
+          room.state === "VOTING" &&
+          r.eligible.every((id) => r.votes[id] !== undefined)
+        )
           finishVoting(room, now, "ALL_VOTED");
       }
       break;
@@ -679,10 +733,7 @@ export function project(room: Room, actor: Actor, now: number, mode: string) {
     queue: forecast(room, now),
     me: actor,
     myVote: actor.role === "member" ? r?.votes[actor.id] : undefined,
-    canVote:
-      room.state === "VOTING" &&
-      !!r?.eligible.includes(actor.id) &&
-      r.votes[actor.id] === undefined,
+    canVote: actor.role === "member" && canVote(room, actor.id, now),
     serverTime: now,
     integrationMode: mode,
   };

@@ -68,7 +68,8 @@ export interface Round {
   eligible: string[];
   votes: Record<string, number>;
   openedAt: number;
-  deadline: number;
+  /** Indefinido enquanto a música toca (votação antecipada). */
+  deadline?: number;
   closedAt?: number;
   reason?: string;
   sum?: number;
