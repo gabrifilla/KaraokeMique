@@ -16,10 +16,11 @@ execFileSync(process.execPath, [tsc, "-p", "tsconfig.server.json"], {
   stdio: "inherit",
 });
 mkdirSync("dist/server/apps/api/migrations", { recursive: true });
-copyFileSync(
-  "apps/api/migrations/001_initial.sql",
-  "dist/server/apps/api/migrations/001_initial.sql",
-);
+for (const file of ["001_initial.sql", "002_push.sql"])
+  copyFileSync(
+    `apps/api/migrations/${file}`,
+    `dist/server/apps/api/migrations/${file}`,
+  );
 console.log(
   "Build completo: dist/web + dist/server. Backend pronto para executar com Node, sem tsx/Vite.",
 );

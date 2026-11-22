@@ -1252,3 +1252,129 @@ h2 {
     animation: none;
   }
 }
+/* Cartão "o que fazer agora" */
+.action-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 10px;
+  padding: 20px 18px;
+  border-radius: 22px;
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+.action-card[data-kind="next"] {
+  background: var(--yellow);
+}
+.action-card[data-kind="turn"] {
+  background: var(--pink);
+  min-height: 250px;
+  animation: turn-alert-pulse 1.6s ease-in-out infinite;
+}
+.action-card > * {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+.action-card .action-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.8;
+}
+.action-card h2 {
+  font-family: var(--heading);
+  font-size: 2.2rem;
+  line-height: 1;
+  color: inherit;
+  padding-right: 70px;
+}
+.action-card[data-kind="vote"] h2 {
+  padding-right: 0;
+}
+.action-card p {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: inherit;
+  padding-right: 110px;
+}
+.action-card[data-kind="vote"] p {
+  padding-right: 0;
+}
+.action-card .action-main {
+  justify-self: start;
+  background: var(--pink);
+  color: var(--paper-ink);
+}
+.action-card .action-mascot {
+  position: absolute;
+  z-index: 0;
+  right: -8px;
+  bottom: -8px;
+  width: 128px;
+  height: auto;
+  pointer-events: none;
+}
+.action-card .action-line {
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.action-card .action-line li {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(54 33 46 / 14%);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.action-card .action-line li[data-now="true"] {
+  background: var(--pink);
+}
+.action-card .action-line li[data-me="true"] {
+  background: var(--paper-ink);
+  color: var(--paper);
+}
+.action-card .action-song {
+  display: grid;
+  width: 74%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgb(54 33 46 / 8%);
+}
+.action-card .action-song small {
+  font-size: 0.78rem;
+  color: var(--paper-muted);
+}
+.action-card .action-timer {
+  font-weight: 700;
+}
+.action-card .vote-grid button[data-score] {
+  background: rgb(54 33 46 / 12%);
+  color: var(--paper-ink);
+}
+.action-card .vote-grid button[aria-pressed="true"] {
+  background: var(--paper-ink);
+  color: var(--paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-card[data-kind="turn"] {
+    animation: none;
+  }
+}
+.action-card .action-push {
+  justify-self: start;
+  background: var(--paper-ink);
+  color: var(--paper);
+  font-size: 0.85rem;
+}
+.action-card .action-push-note {
+  font-size: 0.8rem;
+  font-weight: 600;
+}

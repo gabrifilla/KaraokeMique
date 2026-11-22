@@ -33,6 +33,13 @@ import { Icon } from "./Icons";
 import { PartyPreview } from "./PartyPreview";
 import { Tutorial } from "./Tutorial";
 import { GuidedTour, tourSeen, tourSteps } from "./GuidedTour";
+import {
+  enablePush,
+  pushStatus,
+  registerServiceWorker,
+  resumePush,
+  type PushStatus,
+} from "./push";
 import { Brand, SiteLayout } from "./Branding";
 import {
   EmojiRain,
@@ -76,6 +83,7 @@ function applyLargeText(large: boolean) {
   else delete document.documentElement.dataset.textSize;
 }
 applyLargeText(readLargeText());
+void registerServiceWorker();
 function LargeTextToggle() {
   const [large, setLarge] = useState(readLargeText);
   return (
@@ -767,6 +775,12 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const [tourOpen, setTourOpen] = useState(false);
   const tourChecked = useRef(false);
   const roomReady = !!room && room.me.role === "member";
+  const [push, setPush] = useState<PushStatus>("unsupported");
+  useEffect(() => {
+    if (stage || !roomReady) return;
+    void pushStatus().then(setPush);
+    void resumePush(id);
+  }, [stage, roomReady, id]);
   useEffect(() => {
     // Primeira visita: o mascote guia a pessoa pela sala uma única vez.
     if (stage || !roomReady || tourChecked.current) return;
@@ -921,6 +935,48 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     round.deadline === undefined &&
     ["PLAYING", "PAUSED"].includes(room.state);
   const votingClosed = round?.deadline !== undefined && clock >= round.deadline;
+  const voteControls = room.canVote ? (
+    <>
+      <div className="vote-grid">
+        {Array.from({ length: 11 }, (_, n) => {
+          const chosen = (score ?? room.myVote) === n;
+          return (
+            <button
+              key={n}
+              data-score={n}
+              aria-label={`Nota ${n}`}
+              aria-pressed={chosen}
+              className={chosen ? "selected" : "quiet"}
+              disabled={!online || votingClosed}
+              onClick={() => {
+                // Um toque já vota; tocar em outra nota troca o voto.
+                setScore(n);
+                void command("VOTE", { score: n }, true).then(
+                  () => setScore((s) => (s === n ? undefined : s)),
+                  () => setScore(undefined),
+                );
+              }}
+            >
+              {n}
+            </button>
+          );
+        })}
+      </div>
+      <p role="status" className="vote-status">
+        {room.myVote !== undefined
+          ? `✓ Sua nota: ${room.myVote}. Mudou de ideia? É só tocar em outra.`
+          : "Toque na nota. Dá pra trocar enquanto a votação estiver aberta."}
+      </p>
+    </>
+  ) : room.myVote !== undefined ? (
+    <p role="status">✓ Sua nota: {room.myVote}</p>
+  ) : (
+    <p>
+      {room.current?.singerId === room.me.id
+        ? "Aproveite os aplausos! O cantor não vota."
+        : "Você acompanha esta rodada. Vote na próxima!"}
+    </p>
+  );
   const voting = (
     <section className="card vote" aria-label="Votação da apresentação">
       <p className="eyebrow">
@@ -940,51 +996,166 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       <p>
         {round?.received} de {round?.eligibleCount} votos recebidos
       </p>
-      {!stage &&
-        (room.canVote ? (
-          <>
-            <div className="vote-grid">
-              {Array.from({ length: 11 }, (_, n) => {
-                const chosen = (score ?? room.myVote) === n;
-                return (
-                  <button
-                    key={n}
-                    data-score={n}
-                    aria-label={`Nota ${n}`}
-                    aria-pressed={chosen}
-                    className={chosen ? "selected" : "quiet"}
-                    disabled={!online || votingClosed}
-                    onClick={() => {
-                      // Um toque já vota; tocar em outra nota troca o voto.
-                      setScore(n);
-                      void command("VOTE", { score: n }, true).then(
-                        () => setScore((s) => (s === n ? undefined : s)),
-                        () => setScore(undefined),
-                      );
-                    }}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-            <p role="status" className="vote-status">
-              {room.myVote !== undefined
-                ? `✓ Sua nota: ${room.myVote}. Mudou de ideia? É só tocar em outra.`
-                : "Toque na nota. Dá pra trocar enquanto a votação estiver aberta."}
-            </p>
-          </>
-        ) : room.myVote !== undefined ? (
-          <p role="status">✓ Sua nota: {room.myVote}</p>
-        ) : (
-          <p>
-            {room.current?.singerId === room.me.id
-              ? "Aproveite os aplausos! O cantor não vota."
-              : "Você acompanha esta rodada. Vote na próxima!"}
-          </p>
-        ))}
+      {!stage && voteControls}
     </section>
   );
+  // Cartão "o que fazer agora": uma única ação principal conforme o momento.
+  const pushPrompt =
+    push === "off" ? (
+      <button
+        className="action-push"
+        onClick={() =>
+          void enablePush(id)
+            .then(setPush)
+            .catch(() =>
+              setError(
+                "Não deu para ligar os avisos neste celular. Tente de novo mais tarde.",
+              ),
+            )
+        }
+      >
+        🔔 Me avise quando for minha vez
+      </button>
+    ) : push === "on" ? (
+      <p className="action-push-note">
+        🔔 Avisos ligados: a gente te chama quando chegar sua vez.
+      </p>
+    ) : push === "install" ? (
+      <p className="action-push-note">
+        📲 No iPhone, para receber avisos com a tela bloqueada: toque em{" "}
+        <strong>Compartilhar</strong> e depois em{" "}
+        <strong>Adicionar à Tela de Início</strong>.
+      </p>
+    ) : push === "denied" ? (
+      <p className="action-push-note">
+        As notificações estão bloqueadas neste navegador. Libere nas
+        configurações para receber avisos.
+      </p>
+    ) : null;
+  const myQueueIndex = room.queue.findIndex((s) => s.personId === room.me.id);
+  const myNextSong = myQueueIndex >= 0 ? room.queue[myQueueIndex] : undefined;
+  const actionKind = singingNow
+    ? "turn"
+    : room.state === "VOTING" || earlyVoting
+      ? "vote"
+      : myQueueIndex === 0
+        ? "next"
+        : myNextSong
+          ? "queue"
+          : "choose";
+  const voteSeconds = Math.max(
+    0,
+    Math.ceil(((round?.deadline || 0) - clock) / 1000),
+  );
+  const actionCard =
+    room.me.role !== "member" || room.state === "CLOSED" ? null : (
+      <section
+        className="action-card"
+        data-kind={actionKind}
+        aria-label="O que fazer agora"
+      >
+        {actionKind === "choose" && (
+          <>
+            <p className="action-eyebrow">Sua vez de brilhar</p>
+            <h2>Qual música você quer cantar?</h2>
+            <p>
+              Escolha uma e entre na fila. A TV avisa quando chegar sua vez.
+            </p>
+            <Link className="button action-main" to={`/r/${id}/search`}>
+              🎤 Escolher música
+            </Link>
+            <img
+              className="action-mascot"
+              src="/mascot/v3/welcome.webp"
+              alt=""
+            />
+          </>
+        )}
+        {actionKind === "queue" && myNextSong && (
+          <>
+            <p className="action-eyebrow">Você está na fila</p>
+            <h2>
+              {myQueueIndex === 1
+                ? "Falta 1 música antes da sua"
+                : `Faltam ${myQueueIndex} músicas antes da sua`}
+            </h2>
+            <ol className="action-line" aria-hidden="true">
+              {room.current && <li data-now="true">🎤</li>}
+              {Array.from({ length: Math.min(myQueueIndex, 4) }, (_, i) => (
+                <li key={i}>{i + 1}</li>
+              ))}
+              {myQueueIndex > 4 && <li>+{myQueueIndex - 4}</li>}
+              <li data-me="true">Eu</li>
+            </ol>
+            <div className="action-song">
+              <strong>{myNextSong.video.title}</strong>
+              <small>{myNextSong.video.channel}</small>
+            </div>
+            <p>Pode bloquear o celular. A gente avisa.</p>
+            {pushPrompt}
+            <img
+              className="action-mascot"
+              src="/mascot/v3/step-2.webp"
+              alt=""
+            />
+          </>
+        )}
+        {actionKind === "next" && (
+          <>
+            <p className="action-eyebrow">Prepare a voz</p>
+            <h2>Você é o próximo!</h2>
+            <p>
+              {room.current
+                ? "Fique perto do microfone. Depois desta música é você"
+                : "Já já começa. Fique perto do microfone. Você vai cantar"}
+              {myNextSong && (
+                <>
+                  {" "}
+                  com <strong>{myNextSong.video.title}</strong>
+                </>
+              )}
+              .
+            </p>
+            {pushPrompt}
+            <img
+              className="action-mascot"
+              src="/mascot/v3/encouraging.webp"
+              alt=""
+            />
+          </>
+        )}
+        {actionKind === "turn" && (
+          <>
+            <p className="action-eyebrow">Agora é com você</p>
+            <h2>
+              É SUA VEZ!
+              <br />
+              Pegue o microfone
+            </h2>
+            <p>A letra aparece na TV. Solta a voz!</p>
+            <img
+              className="action-mascot"
+              src="/mascot/v3/celebration.webp"
+              alt=""
+            />
+          </>
+        )}
+        {actionKind === "vote" && (
+          <>
+            <p className="action-eyebrow">
+              {singer?.name} {earlyVoting ? "tá na reta final" : "deu um show"}
+            </p>
+            <h2>Qual nota essa voz merece?</h2>
+            <p className="action-timer" role="status">
+              {earlyVoting
+                ? "Votação aberta! Fecha 10 segundos depois que a música acabar."
+                : `Fecha em ${voteSeconds} ${voteSeconds === 1 ? "segundo" : "segundos"}.`}
+            </p>
+            {voteControls}
+          </>
+        )}
+      </section>
+    );
   const queue = (
     <section className="card queue">
       <div className="section-heading">
@@ -1165,27 +1336,30 @@ function RoomView({ stage = false }: { stage?: boolean }) {
           {error}
         </p>
       )}
-      {alertKey && alertKind !== "vote" && dismissedAlert !== alertKey && (
-        <div
-          className="turn-alert"
-          data-kind={alertKind}
-          role="alert"
-          aria-live="assertive"
-        >
-          <strong>
-            {alertKind === "turn"
-              ? "🎤 É a sua vez! Pegue o microfone."
-              : "⏭️ Você é o próximo! Fique perto do microfone."}
-          </strong>
-          <button
-            className="quiet"
-            onClick={() => setDismissedAlert(alertKey)}
-            aria-label="Fechar aviso"
+      {alertKey &&
+        alertKind !== "vote" &&
+        tab !== "room" &&
+        dismissedAlert !== alertKey && (
+          <div
+            className="turn-alert"
+            data-kind={alertKind}
+            role="alert"
+            aria-live="assertive"
           >
-            ×
-          </button>
-        </div>
-      )}
+            <strong>
+              {alertKind === "turn"
+                ? "🎤 É a sua vez! Pegue o microfone."
+                : "⏭️ Você é o próximo! Fique perto do microfone."}
+            </strong>
+            <button
+              className="quiet"
+              onClick={() => setDismissedAlert(alertKey)}
+              aria-label="Fechar aviso"
+            >
+              ×
+            </button>
+          </div>
+        )}
       {!stage && feedback && (
         <div className="feedback" role="status">
           {feedback}
@@ -1282,7 +1456,9 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                 {room.people.find((p) => p.id === room.me.id)?.avatar}
               </span>
             </section>
-            {(room.state === "VOTING" || earlyVoting) && voting}
+            {(room.state === "VOTING" || earlyVoting) &&
+              tab !== "room" &&
+              voting}
             {room.state === "RESULTS" &&
               room.current &&
               result(room.current, true)}
@@ -1330,6 +1506,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                     </Link>
                   </section>
                 )}
+                {actionCard}
                 {current && !["VOTING", "RESULTS"].includes(room.state) && (
                   <div className="current-stack">
                     <section className="card current">
@@ -1347,41 +1524,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
                         </p>
                       </div>
                     </section>
-                    <Link
-                      className="own-request"
-                      to={`/r/${id}/${ownPending ? "queue" : "search"}`}
-                    >
-                      <Icon name="music" />
-                      <span>
-                        <small>Seu pedido</small>
-                        <strong>
-                          {ownPending?.video.title ||
-                            "Escolha sua próxima música"}
-                        </strong>
-                        <small>
-                          {ownPending
-                            ? "Na fila · a ordem aparece no palco"
-                            : "Busque uma música e solte a voz"}
-                        </small>
-                      </span>
-                      <span aria-hidden="true">›</span>
-                    </Link>
                   </div>
-                )}
-                {room.state === "LOBBY" && (
-                  <section className="card lobby">
-                    <img
-                      src="/mascot/v3/welcome.webp"
-                      alt="Mascote microfone"
-                    />
-                    <div>
-                      <h2>Quem vai puxar a primeira?</h2>
-                      <p>Busque sua música favorita e entre na fila.</p>
-                      <Link to={`/r/${id}/search`} className="text-link">
-                        Escolher uma música ↗
-                      </Link>
-                    </div>
-                  </section>
                 )}
                 {room.state !== "CLOSED" && (
                   <section

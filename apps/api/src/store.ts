@@ -54,12 +54,10 @@ export class Store {
     this.db = drizzle(this.pool);
   }
   async init() {
-    await this.pool.query(
-      readFileSync(
-        new URL("../migrations/001_initial.sql", import.meta.url),
-        "utf8",
-      ),
-    );
+    for (const file of ["001_initial.sql", "002_push.sql"])
+      await this.pool.query(
+        readFileSync(new URL(`../migrations/${file}`, import.meta.url), "utf8"),
+      );
   }
   async read(id: string) {
     const [row] = await this.db.select().from(rooms).where(eq(rooms.id, id));

@@ -33,6 +33,7 @@ import { allowsDevelopmentPairing, resolvePairing } from "./pairing.js";
 import { prepareAutomatically } from "./auto-queue.js";
 import { deploymentOrigin, trustProxy } from "./deployment.js";
 import { serveFrontend } from "./frontend.js";
+import { notifyRoom, pushPublicKey } from "./push.js";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { mode, search, suggestions, validateVideo } from "./youtube.js";
 import {
@@ -161,6 +162,39 @@ class Api {
     const token = secret();
     res.cookie("k_csrf", token, { ...cookieOptions, httpOnly: false });
     return { token };
+  }
+  @Get("push/key") pushKey() {
+    return { publicKey: pushPublicKey };
+  }
+  @Post("rooms/:id/push") async subscribePush(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() req: Request,
+  ) {
+    roomId(id);
+    const a = await identity(req, id);
+    requireRule(
+      a.role === "member",
+      "FORBIDDEN",
+      "Entre na sala para fazer isso.",
+      403,
+    );
+    limit(`push:${a.id}`, 10, 60000);
+    const sub = z
+      .object({
+        endpoint: z.url().max(1000).startsWith("https://"),
+        keys: z.object({
+          p256dh: z.string().min(1).max(200),
+          auth: z.string().min(1).max(100),
+        }),
+      })
+      .parse(body);
+    await store.pool.query(
+      `INSERT INTO push_subscriptions(endpoint,room_id,person_id,p256dh,auth) VALUES($1,$2,$3,$4,$5)
+       ON CONFLICT(endpoint) DO UPDATE SET room_id=$2,person_id=$3,p256dh=$4,auth=$5,created_at=now()`,
+      [sub.endpoint, id, a.id, sub.keys.p256dh, sub.keys.auth],
+    );
+    return { ok: true };
   }
   @Get("hosted-rooms") async hosted(@Req() req: Request) {
     const tokens = Object.entries(req.cookies)
@@ -713,6 +747,11 @@ async function publish() {
     );
     const ids = new Set<string>(rows.rows.map((r) => r.room_id));
     for (const id of ids) {
+      // Avisos no celular (mesmo bloqueado) para vez, próximo e votação.
+      void store
+        .read(id)
+        .then((room) => notifyRoom(store, room))
+        .catch(() => console.error(JSON.stringify({ event: "push_error" })));
       const sockets = await io.in(`room:${id}`).fetchSockets();
       for (const s of sockets) {
         try {
