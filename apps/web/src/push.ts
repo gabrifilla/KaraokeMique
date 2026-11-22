@@ -1,7 +1,8 @@
 import { api } from "./api";
 
 export type PushStatus =
-  | "unsupported" // navegador sem push, ou servidor sem chaves
+  | "unsupported" // navegador sem push
+  | "unconfigured" // servidor ainda sem as chaves VAPID
   | "install" // iPhone/iPad: precisa adicionar à Tela de Início primeiro
   | "denied" // a pessoa bloqueou as notificações
   | "off" // dá para ligar
@@ -13,6 +14,9 @@ const isIos = () =>
 const standalone = () =>
   matchMedia("(display-mode: standalone)").matches ||
   (navigator as any).standalone === true;
+
+/** Disparado quando os avisos são ligados em algum lugar do app. */
+export const PUSH_EVENT = "karaoke:push-changed";
 
 let registration: Promise<ServiceWorkerRegistration | undefined> | undefined;
 export function registerServiceWorker() {
@@ -30,14 +34,15 @@ const publicKey = () =>
     .catch(() => null));
 
 export async function pushStatus(): Promise<PushStatus> {
-  if (isIos() && !standalone() && !("PushManager" in window)) return "install";
+  if (!(await publicKey())) return "unconfigured";
+  // No iPhone/iPad, push de site só existe no app instalado na Tela de Início.
+  if (isIos() && !standalone()) return "install";
   if (
     !("serviceWorker" in navigator) ||
     !("PushManager" in window) ||
     !("Notification" in window)
   )
     return "unsupported";
-  if (!(await publicKey())) return "unsupported";
   if (Notification.permission === "denied") return "denied";
   if (Notification.permission !== "granted") return "off";
   const reg = await registerServiceWorker();

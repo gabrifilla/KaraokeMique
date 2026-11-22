@@ -8,6 +8,7 @@ import {
 import type { CSSProperties, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import "./guided-tour.css";
+import { PushSetup } from "./PushSetup";
 
 type Mood =
   | "welcome"
@@ -25,7 +26,8 @@ export interface TourStep {
   mood: Mood;
   move: Move;
   title: string;
-  body: ReactNode;
+  /** Conteúdo do balão; como função, pode fazer o Míque comemorar. */
+  body: ReactNode | ((ctx: { celebrate: () => void }) => ReactNode);
   /** Seletor do elemento destacado; sem ele, o balão fica centralizado. */
   target?: string;
   /** Rota aberta antes de mostrar o passo. */
@@ -118,18 +120,21 @@ export function tourSteps(
       </p>
     ),
   };
+  const roomId = base.split("/").pop() || "";
   const alerts: TourStep = {
     id: "avisos",
     mood: "encouraging",
     move: "hop",
-    title: "Pode bloquear o celular 🔒",
-    body: (
-      <p>
-        Sua música não sai da fila. Com o app aberto, quando estiver chegando
-        sua vez eu vibro e toco um “ding”. E se tocar em{" "}
-        <strong>🔔 Me avise quando for minha vez</strong>, eu te chamo até com a
-        tela bloqueada!
-      </p>
+    title: "Posso te chamar? 🔔",
+    body: ({ celebrate }) => (
+      <>
+        <p>
+          Pode bloquear o celular: sua música não sai da fila. Se deixar, eu te
+          aviso quando você for o próximo, quando for sua vez e na hora de
+          votar, até com a tela bloqueada!
+        </p>
+        <PushSetup roomId={roomId} onEnabled={celebrate} />
+      </>
     ),
   };
   const reactions: TourStep = {
@@ -505,7 +510,11 @@ export function GuidedTour({
           </p>
           <h2 id="tour-title">{step.title}</h2>
           <div id="tour-body" aria-live="polite">
-            {tried && step.tryIt ? step.tryIt.done : step.body}
+            {tried && step.tryIt
+              ? step.tryIt.done
+              : typeof step.body === "function"
+                ? step.body({ celebrate: () => setTried(true) })
+                : step.body}
           </div>
           <div className="tour-dots" aria-hidden="true">
             {steps.map((s, i) => (

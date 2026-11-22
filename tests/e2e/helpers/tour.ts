@@ -38,7 +38,9 @@ export async function checkHostTour(host: Page) {
   await next();
   await title("Sua mesa de som 🎛️");
   await next();
-  await title("Pode bloquear o celular 🔒");
+  await title("Posso te chamar? 🔔");
+  // Servidor de teste sem chaves de push: o tour não promete aviso bloqueado.
+  await expect(tour.getByText(/ainda não foram ligados/)).toBeVisible();
   await next();
   await title("Manda energia pro palco!");
   // Passo "experimente": o emoji destacado funciona de verdade.

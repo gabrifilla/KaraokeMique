@@ -196,6 +196,22 @@ class Api {
     );
     return { ok: true };
   }
+  @Get("my-rooms") async myRooms(@Req() req: Request) {
+    // Festas abertas em que este aparelho já entrou (pelos cookies de sessão).
+    const tokens = Object.entries(req.cookies)
+      .filter(
+        ([key, value]) =>
+          key.startsWith("k_member_") && typeof value === "string",
+      )
+      .slice(0, 50)
+      .map(([, value]) => hash(value as string));
+    if (!tokens.length) return [];
+    const result = await store.pool.query(
+      "SELECT DISTINCT r.id,r.code,r.data->>'name' AS name FROM rooms r JOIN sessions s ON s.room_id=r.id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND s.actor->>'role'='member' AND r.data->>'state'<>'CLOSED' AND EXISTS (SELECT 1 FROM jsonb_array_elements(r.data->'people') p WHERE p->>'id'=s.actor->>'id' AND p->>'status'='ACTIVE')",
+      [tokens],
+    );
+    return result.rows;
+  }
   @Get("hosted-rooms") async hosted(@Req() req: Request) {
     const tokens = Object.entries(req.cookies)
       .filter(

@@ -39,8 +39,11 @@ import {
   pushStatus,
   registerServiceWorker,
   resumePush,
+  PUSH_EVENT,
   type PushStatus,
 } from "./push";
+import { InstallButton } from "./PushSetup";
+import { isStandalone } from "./install";
 import { Brand, SiteLayout } from "./Branding";
 import {
   EmojiRain,
@@ -148,6 +151,19 @@ function Entrance() {
   const isNew = location.pathname === "/rooms/new";
   const isJoin = location.pathname.startsWith("/join");
   const fromTv = isNew && new URLSearchParams(location.search).has("tv");
+  const isHome = !isNew && !isJoin;
+  // Festas em que este aparelho já está: "Voltar pra festa" na tela inicial e,
+  // no app instalado, abre direto na festa.
+  const myRooms = useQuery({
+    queryKey: ["my-rooms"],
+    queryFn: () =>
+      api<{ id: string; code: string; name: string }[]>("/my-rooms"),
+    enabled: isHome,
+  });
+  useEffect(() => {
+    if (isHome && isStandalone() && myRooms.data?.length === 1)
+      navigate(`/r/${myRooms.data[0].id}`, { replace: true });
+  }, [isHome, myRooms.data]);
   const [code, setCode] = useState(inviteCode || "");
   const [nickname, setNickname] = useState("");
   const [name, setName] = useState("");
@@ -249,6 +265,15 @@ function Entrance() {
           </p>
           {!isNew && !isJoin ? (
             <>
+              {!!myRooms.data?.length && (
+                <div className="back-to-party">
+                  {myRooms.data.map((r) => (
+                    <Link key={r.id} className="button" to={`/r/${r.id}`}>
+                      🎤 Voltar pra festa {r.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
               <div className="actions hero-actions">
                 <Link className="button" to="/rooms/new">
                   Criar uma sala
@@ -257,6 +282,7 @@ function Entrance() {
                 <Link className="button secondary" to="/join">
                   Tenho um código
                 </Link>
+                <InstallButton className="button secondary" />
                 <Link className="button secondary" to="/stage/tv">
                   Usar como palco
                 </Link>
@@ -785,6 +811,9 @@ function RoomView({ stage = false }: { stage?: boolean }) {
     if (stage || !roomReady) return;
     void pushStatus().then(setPush);
     void resumePush(id);
+    const refresh = () => void pushStatus().then(setPush);
+    window.addEventListener(PUSH_EVENT, refresh);
+    return () => window.removeEventListener(PUSH_EVENT, refresh);
   }, [stage, roomReady, id]);
   useEffect(() => {
     // Primeira visita: o mascote guia a pessoa pela sala uma única vez.
@@ -1093,6 +1122,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
             </div>
             <p>Pode bloquear o celular. A gente avisa.</p>
             {pushPrompt}
+            <InstallButton className="action-install" />
             <img
               className="action-mascot"
               src="/mascot/v3/step-2.webp"
@@ -1117,6 +1147,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
               .
             </p>
             {pushPrompt}
+            <InstallButton className="action-install" />
             <img
               className="action-mascot"
               src="/mascot/v3/encouraging.webp"

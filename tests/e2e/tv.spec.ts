@@ -27,6 +27,10 @@ test("TV autorizada pelo QR no celular e abertura direta com um toque", async ({
     const roomCode = host.locator("[data-room-code]");
     await expect(roomCode).toHaveText(/^[A-F0-9]{8}$/);
     const roomUrl = host.url();
+    // Fechou a aba? A tela inicial leva de volta pra festa com um toque.
+    await host.goto("/");
+    await host.getByRole("link", { name: /Voltar pra festa/ }).click();
+    await expect(host).toHaveURL(roomUrl);
     // Reutiliza a sala para respeitar o limite real de criação por IP na suíte.
     await checkSuggestions(host);
     // Com sala aberta, o QR de outra TV oferece escolher a festa.

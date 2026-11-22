@@ -1386,3 +1386,35 @@ h2 {
   font-size: 0.8rem;
   font-weight: 600;
 }
+.back-to-party {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.back-to-party .button {
+  justify-content: center;
+  background: var(--yellow);
+  color: var(--paper-ink);
+}
+.action-card .install-app,
+.tour .install-app {
+  justify-self: start;
+  background: var(--paper-ink);
+  color: var(--paper);
+  font-size: 0.85rem;
+}
+.tour .push-setup-button {
+  margin: 4px 0;
+  background: var(--primary);
+  color: var(--paper-ink);
+  font-weight: 800;
+}
+.tour .push-setup-note,
+.tour .ios-install li {
+  font-size: 0.8rem;
+}
+.tour .ios-install {
+  margin: 4px 0 6px;
+  padding-left: 18px;
+  list-style: decimal;
+}
