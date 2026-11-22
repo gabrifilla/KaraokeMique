@@ -775,6 +775,10 @@ function RoomView({ stage = false }: { stage?: boolean }) {
   const [tourOpen, setTourOpen] = useState(false);
   const tourChecked = useRef(false);
   const roomReady = !!room && room.me.role === "member";
+  // Trocar de aba volta ao topo, onde fica o cartão "o que fazer agora".
+  useEffect(() => {
+    if (!stage) window.scrollTo({ top: 0, behavior: "instant" });
+  }, [tab, stage]);
   const [push, setPush] = useState<PushStatus>("unsupported");
   useEffect(() => {
     if (stage || !roomReady) return;
@@ -1315,7 +1319,7 @@ function RoomView({ stage = false }: { stage?: boolean }) {
       {tourOpen && !stage && room.me.role === "member" && (
         <GuidedTour
           role={tourRole}
-          steps={tourSteps(tourRole, `/r/${id}`)}
+          steps={tourSteps(tourRole, `/r/${id}`, { tvOn: room.epoch > 0 })}
           onClose={() => setTourOpen(false)}
         />
       )}

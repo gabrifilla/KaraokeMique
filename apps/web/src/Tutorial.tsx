@@ -27,57 +27,59 @@ const steps = [
   },
   {
     id: "criar",
-    title: "Crie a sala no seu celular",
+    title: "Ligue a TV e crie a festa de uma vez",
     content: (
       <>
-        <p>Quem vai organizar a festa começa por aqui:</p>
+        <p>Quem vai organizar a festa começa pela TV:</p>
         <ol>
           <li>
-            Na tela inicial, toque em <strong>Criar uma sala</strong>.
+            Na TV ou no computador, abra o endereço do Karaoke Míque e escolha{" "}
+            <strong>Usar como palco</strong>. Aparece um QR code.
           </li>
           <li>
-            Escolha o nome da sala, informe seu apelido e selecione um avatar.
+            Aponte a câmera do seu celular para esse QR. O celular abre a tela
+            de criar a festa.
           </li>
           <li>
-            Toque em <strong>Criar minha sala</strong>. Você se torna o
-            anfitrião.
+            Informe seu apelido (e, se quiser, o nome da sala) e toque em{" "}
+            <strong>Criar minha sala</strong>. Pronto: a TV liga sozinha e você
+            vira o anfitrião.
           </li>
         </ol>
         <p>
           Guarde essa aba aberta no celular: é por ela que você controla o
-          palco.
+          palco. Se você já tiver uma festa aberta, o celular pergunta qual
+          delas mostrar na TV.
         </p>
       </>
     ),
   },
   {
     id: "tv",
-    title: "Conecte a TV ao palco",
+    title: "Sem câmera ou trocando de TV",
     content: (
       <>
         <ol>
           <li>
-            Na TV ou no computador, abra o mesmo endereço e escolha{" "}
-            <strong>Usar como palco</strong>.
+            Crie a sala no celular em <strong>Criar uma sala</strong>.
           </li>
           <li>
-            A TV mostra um QR code e um código de seis dígitos. Escaneie esse QR
-            com o celular do anfitrião e confirme a sala.
+            Na TV, abra o site e escolha <strong>Usar como palco</strong>. Ela
+            mostra um número.
           </li>
           <li>
-            Se preferir digitar, no celular entre em{" "}
-            <strong>Palco → Conectar ou reconfigurar TV</strong>, informe os
-            seis dígitos e toque em <strong>Conectar TV</strong>.
+            No celular, toque em <strong>Ligar a TV</strong>, digite o número da
+            TV e confirme.
           </li>
         </ol>
         <p>
-          A TV abre a apresentação automaticamente. O QR que passa a aparecer no
-          palco serve para os jogadores entrarem na sala.
+          Quando a TV liga, aparece nela um novo QR: esse serve para os
+          convidados entrarem na sala.
         </p>
         <p>
           Vai usar o próprio computador como palco? Na aba{" "}
-          <strong>Palco</strong> do anfitrião, abra a área de conexão e escolha{" "}
-          <strong>Usar esta tela como palco</strong>.
+          <strong>Palco</strong> do anfitrião, abra <strong>Ligar a TV</strong>{" "}
+          e escolha <strong>Usar esta tela como palco</strong>.
         </p>
         <p className="tutorial-tip">
           Para tirar as barras do navegador, use a opção de tela cheia da TV ou
@@ -107,8 +109,8 @@ const steps = [
           e digite o código da sala, mostrado ao lado do QR no palco.
         </p>
         <p>
-          O código de seis dígitos conecta a TV. O código de oito caracteres
-          identifica a sala para os jogadores.
+          Letras pequenas? Toque no botão <strong>Aa</strong>, no topo da tela,
+          para aumentá-las naquele celular.
         </p>
       </>
     ),
@@ -129,8 +131,9 @@ const steps = [
             precisa escrever “karaoke”: o sistema acrescenta isso.
           </li>
           <li>
-            Confira o título e o canal, toque em <strong>Adicionar</strong> e
-            depois em <strong>Confirmar</strong>.
+            Confira o título e o canal e toque em <strong>Adicionar</strong>. Um
+            toque basta: a música já entra na fila. Se tocou sem querer, use{" "}
+            <strong>Desfazer</strong> no aviso que aparece.
           </li>
         </ol>
         <p>
@@ -148,9 +151,20 @@ const steps = [
     content: (
       <>
         <p>
-          A ordem de <strong>Próximas vozes</strong> aparece na TV. Quem cantou
+          No topo da aba <strong>Sala</strong>, um cartão mostra sempre o que
+          fazer agora: escolher música, quantas músicas faltam antes da sua,
+          quando você é o próximo e quando é a sua vez. A ordem de{" "}
+          <strong>Próximas vozes</strong> também aparece na TV. Quem cantou
           menos canta antes e, entre os seus pedidos, sai primeiro o mais
           antigo.
+        </p>
+        <p>
+          Pode bloquear o celular: sua música continua na fila. Perto da sua vez
+          o celular vibra, e tocando em{" "}
+          <strong>🔔 Me avise quando for minha vez</strong> você recebe aviso
+          até com a tela bloqueada. No iPhone, para os avisos funcionarem,
+          adicione o site à Tela de Início (Compartilhar → Adicionar à Tela de
+          Início).
         </p>
         <p>
           Com o palco conectado e <strong>Tocar fila automaticamente</strong>{" "}
@@ -175,10 +189,11 @@ const steps = [
             nos celulares.
           </li>
           <li>
-            Escolha uma nota de <strong>0 a 10</strong> e toque em{" "}
-            <strong>Confirmar nota</strong>. A votação fica aberta até{" "}
-            <strong>dez segundos</strong> depois do fim da música; se todos já
-            tiverem votado, a nota sai logo que a música acaba.
+            Toque numa nota de <strong>0 a 10</strong>: um toque já vota. Mudou
+            de ideia? Toque em outra nota; seu voto é trocado e conta uma vez
+            só. A votação fica aberta até <strong>dez segundos</strong> depois
+            do fim da música; se todos já tiverem votado, a nota sai poucos
+            segundos depois.
           </li>
           <li>
             Acompanhe a revelação da média no palco, com a reação do mascote.
@@ -254,8 +269,8 @@ const steps = [
             do GIF na TV.
           </li>
           <li>
-            Conectar ou reconfigurar a TV. Um novo pareamento substitui o palco
-            anterior.
+            Ligar ou trocar a TV em <strong>Ligar a TV</strong>. Uma TV nova
+            substitui o palco anterior.
           </li>
         </ul>
         <p>
